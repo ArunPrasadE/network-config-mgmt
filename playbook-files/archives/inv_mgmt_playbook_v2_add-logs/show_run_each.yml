@@ -1,0 +1,138 @@
+---
+# Vswitch
+- name: Gather running configuration from vswitch switches
+  hosts: vswitch
+  gather_facts: no
+  ignore_unreachable: yes
+  ignore_errors: yes
+  tasks:
+    - name: Gather facts manually
+      ansible.builtin.setup:
+    
+    - name: Save vswitch running configuration to a file
+      cisco.nxos.nxos_command:
+        commands:
+          - show running-config
+          - show interface status
+          - show vlan brief
+          - show port-channel summary
+          - show ip interface brief
+      register: nexus_output
+
+
+    - name: Write vswitch output to a host-specific file
+      copy:
+        content: |
+          === Running Configuration ===
+
+          {{ nexus_output.stdout[0] }}
+
+          === Interface Status ===
+
+          {{ nexus_output.stdout[1] }}
+
+          === VLAN Brief ===
+
+          {{ nexus_output.stdout[2] }}
+          
+          === Port-Channel Summary ===
+
+          {{ nexus_output.stdout[3] }}
+
+          === IP Interface Brief ===
+
+          {{ nexus_output.stdout[4] }}
+            
+        dest: "/inv_mgmt_playbook/running_config/{{ inventory_hostname }}_{{ ansible_date_time.date }}.json"
+
+# IOS
+- name: Gather running configuration from ios switches
+  hosts: ios
+  gather_facts: no
+  ignore_unreachable: yes
+  ignore_errors: yes
+  tasks:
+    - name: Gather facts manually
+      ansible.builtin.setup:
+    
+    - name: Save ios running configuration to a file
+      cisco.ios.ios_command:
+        commands:
+          - show running-configuration
+          - show interface status
+      register: ios_output
+    
+    - name: Write ios output to host-specific file
+      copy:
+        content: |
+          === Running Configuration ===
+
+          {{ ios_output.stdout[0] }}
+
+          === Interface Status ===
+
+          {{ ios_output.stdout[1] }}
+          
+        dest: "/inv_mgmt_playbook/running_config/{{ inventory_hostname }}_{{ ansible_date_time.date }}.json"
+      
+# Cumulus
+- name: Gather running configuration from cumulus switches
+  hosts: cumulus
+  gather_facts: no
+  ignore_unreachable: yes
+  ignore_errors: yes
+  tasks:
+    - name: Gather facts manually
+      ansible.builtin.setup:
+
+    - name: Save cumulus running configuration to a file
+      ansible.builtin.command: "net show configuration commands"
+      become: yes
+      register: cumulus_conf_output
+
+    - name: Save cumulus Interface status to a file
+      ansible.builtin.command: "net show interface"
+      become: yes
+      register: cumulus_intf_output
+
+    - name: Write cumulus output to a host-specific file
+      delegate_to: localhost
+      ansible.builtin.copy:
+       content: |
+         === Running Configuration ===
+
+         {{ cumulus_conf_output.stdout }}
+
+         === Interface Status ===
+
+         {{ cumulus_intf_output.stdout }}
+
+       dest: "/config_mgmt_playbook/running_config/{{ inventory_hostname }}_{{ ansible_date_time.date }}.json"
+       
+# Fortigate
+- name: Gather configuration from FortiGate firewalls via SSH
+  hosts: local
+  gather_facts: no
+  ignore_unreachable: yes
+  ignore_errors: yes
+  tasks:
+    - name: Gather facts manually
+      ansible.builtin.setup:
+
+    - name: Run 'show full-configuration' command
+      ansible.builtin.command:
+        cmd: >
+          python3 fortigate_get_full_config.py
+      register: full_config
+    - name: Extract hostname from script output
+      set_fact:
+        fortigate_hostname: "{{ full_config.stdout | from_json | json_query('hostname') }}"
+
+    - name: Save FortiGate running configuration to a file
+      copy:
+       content: |
+         === Running Configuration ===
+        
+         {{ full_config.stdout }}
+  
+       dest: "/fortigate/running_config/{{ fortigate_hostname }}_{{ ansible_date_time.date }}.json"

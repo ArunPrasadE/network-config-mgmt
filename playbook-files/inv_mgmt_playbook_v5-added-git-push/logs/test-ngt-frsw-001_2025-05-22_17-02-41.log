@@ -1,0 +1,12 @@
+
+PLAY [Gather running configuration from vswitch switches] **********************
+skipping: no hosts matched
+
+PLAY [Gather running configuration from Nexus switches] ************************
+skipping: no hosts matched
+
+PLAY [Gather running configuration from ios switches] **************************
+
+TASK [Gather facts manually] ***************************************************
+[WARNING]: ansible-pylibssh not installed, falling back to paramiko
+ [ERROR]: User interrupted execution

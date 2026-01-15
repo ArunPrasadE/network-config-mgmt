@@ -1,0 +1,4 @@
+ansible_user: cumulus
+ansible_password: jpc1234%
+ansible_network_os: linux
+ansible_connection: ssh

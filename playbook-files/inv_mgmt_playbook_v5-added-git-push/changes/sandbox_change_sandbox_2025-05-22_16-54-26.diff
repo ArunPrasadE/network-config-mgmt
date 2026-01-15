@@ -1,0 +1,1455 @@
+--- /tmp/tmp.oxV5sASg6r	2025-05-22 16:54:33.743386807 +0900
++++ /tmp/tmp.orUujtRV4P	2025-05-22 16:54:33.744386805 +0900
+@@ -1,1110 +1,3 @@
+-=== Running Configuration ===
+-
+-!Command: show running-config
+-
+-version 10.3(3) Bios:version  
+-hostname nxos
+-class-map type network-qos c-out-8q-q3
+-policy-map type network-qos NVME_DPP
+-  class type network-qos c-out-8q-q3
+-install feature-set fcoe
+-vdc nxos id 1
+-  allow feature-set fcoe
+-  limit-resource vlan minimum 16 maximum 4094
+-  limit-resource vrf minimum 2 maximum 4097
+-  limit-resource port-channel minimum 0 maximum 511
+-  limit-resource m4route-mem minimum 58 maximum 58
+-  limit-resource m6route-mem minimum 8 maximum 8
+-feature-set fcoe
+-
+-feature telnet
+-feature nxapi
+-feature bash-shell
+-feature scp-server
+-feature sftp-server
+-feature vrrp
+-feature tacacs+
+-cfs eth distribute
+-feature scheduler
+-nv overlay evpn
+-feature ospf
+-feature bgp
+-feature ospfv3
+-feature pim
+-feature pim6
+-feature eigrp
+-feature isis
+-feature netconf
+-feature restconf
+-feature grpc
+-feature port-security
+-feature interface-vlan
+-feature vn-segment-vlan-based
+-feature hsrp
+-feature lacp
+-feature dhcp
+-feature tunnel
+-feature macsec
+-feature vpc
+-feature lldp
+-feature bfd
+-clock timezone EST -5 0
+-clock summer-time PDT 1 Sunday March 02:00 1 Sunday November 02:00 60
+-feature sla sender
+-feature nat
+-feature nv overlay
+-feature telemetry
+-feature tunnel-encryption
+-
+-logging level securityd 5
+-logging level netstack 6
+-
+-role feature-group name TEST
+-  feature router-bgp
+-role name myrole
+-role name SHOW-ROLE
+-  rule 3 permit command show ip route
+-  rule 2 permit command show ip interface brief
+-  rule 1 deny read-write  
+-role name TEST
+-  rule 1 permit read-write feature-group TEST
+-username admin password 5 $5$MHKPHH$huHbFd.JLqXIMaDWzIS.62Azt2KYfOhpBdqGgQb1d03  role network-admin
+-username admin sshkey ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC+G+N2bcHoUEwCRfFtu34PMPfg0UtCmmypH3OGXS3xyhu+kMqjiWJXPy9XAQ97DydwftOiV2u9+K5/VVM2IyWXaprDJvrJ6oN9vAMRjthPO/QX6GUQIojO2hUA4PfdNSrZ+FHw28TXpG2Z5dfCEH/FX5DsNOYQjrls2J6xrDHIZkADoZhk8oXmIoJ9jYuRl9U3Nc0qiftjg0mn3zHSFFpRdJ/fFKscx0zPREuqRfGoFNBTDOvJVNUwB85S+qwQzGPF51Xsd1RAG4bZdYGRVoVBOgdXoHXPYCsc1idD3vdmqK3if8TCo+Itqj0n1S1nC5wWInaBux+jUxdPFKDi2dM/EFbWNEipA7InAMD40yBCy1ESDPtqdyMP9ye5dtA4gHy6UQGHHB0fBfTOVEJOu7yGAvVmPqkvKEk+HQEasiwfOggu0Q6Urc9FG82FJq5Qo63C4fNmd5jPeB0g/4V1oBgn4lHiJ9TYFoBq0iuYJsDbUgiyWkPhfoygYL779S004MM= nachman@nachman-Vostro-3400
+-username mihai-temp-user password 5 $5$EBHPND$FQhYENUN18/PZW3FZcdC6hC22ZM4L1X0NioCOHrJAAC expire 2030-07-31 role network-operator
+-username mihai-temp-user passphrase  lifetime 99999 warntime 14 gracetime 3
+-username ansibleone password 5 $5$CBJEGC$MeQOo.fbPgB0LvUSU5U2nbu5D3qbO8v5Vr6KBzttoE2  role network-admin
+-username ansibleone passphrase  lifetime 99999 warntime 14 gracetime 3
+-username user1 password 5 $5$IHNMKH$fZbVFPRFOA5DNQs75NMXqYxHR3k5roB5glnlB4js4P4  role network-operator
+-username user1 passphrase  lifetime 99999 warntime 14 gracetime 3
+-username temp_user2000 password 5 $5$EECIDI$Z39PH2z0pgggr6cb6XxJsbqMEYdL00Jf9i.yt7j1Ja2 expire 2030-07-30 role network-operator
+-username temp_user2000 passphrase  lifetime 99999 warntime 14 gracetime 3
+-username DING_DONG password 5 $5$KFPAPD$IPhjObEyQD7vcNWHvloMD/MYhb8.V5E8rx4ONmecI0C expire 2030-07-30 role network-operator
+-username DING_DONG passphrase  lifetime 99999 warntime 14 gracetime 3
+-username gugus password 5 !  role TEST
+-username gugus passphrase  lifetime 99999 warntime 14 gracetime 3
+-ssh key rsa 2048 
+-
+-banner motd #ADVERTENCIA: Acceso autorizado nicamente a personal de TI#
+-
+-userpassphrase min-length 20 max-length 127 
+-
+-ip domain-lookup
+-ip domain-name net.cloud
+-ip name-server 8.8.8.8 1.1.1.1
+-tacacs-server host 10.1.1.1 key 7 "WwgfusFjq123" 
+-aaa group server radius rad1 
+-feature password encryption aes
+-crypto key generate rsa label grpc exportable modulus 4096
+-crypto ca trustpoint grpc 
+-     rsakeypair grpc 
+-     revocation-check  crl 
+-ip access-list ADMIN_ACL
+-  10 permit ip 10.0.0.0/24 any 
+-  20 deny ip any any log 
+-ip access-list DCI-Backup_and_Rep-ACL
+-  10 permit ip 10.130.160.0/24 any 
+-  20 permit ip 10.130.161.0/24 any 
+-  30 permit ip 10.130.162.0/24 any 
+-  40 permit ip 10.134.160.0/24 any 
+-  50 permit ip 10.134.161.0/24 any 
+-  60 permit ip 10.134.162.0/24 any 
+-  70 permit ip 10.190.160.0/24 any 
+-  80 permit ip 10.190.161.0/24 any 
+-  90 permit ip 10.190.162.0/24 any 
+-  100 permit ip 10.192.160.0/24 any 
+-  110 permit ip 10.192.161.0/24 any 
+-  120 permit ip 10.192.162.0/24 any 
+-ip access-list MGMT_ACL
+-  10 permit ip 10.0.0.0/8 any 
+-  20 deny ip any any log 
+-ip access-list MGMT_SECURITY
+-  10 permit ip 10.0.0.0/8 any 
+-  20 deny ip any any log 
+-ip access-list MYIN
+-ip access-list SNMP1234
+-  10 permit ip 172.30.7.172 255.255.255.255 any 
+-  20 permit ip 172.30.95.0 255.255.255.0 any 
+-ip access-list mgmt-acl
+-  10 permit ip 10.0.0.0/24 any 
+-  20 deny ip any any log 
+-ip access-list na64
+-ip access-list stig221081
+-  10 deny icmp any any fragments log 
+-class-map type qos match-all NVME_CLASS
+-class-map type qos match-all backup_and_Rep
+-  match access-group name DCI-Backup_and_Rep-ACL
+-class-map type qos match-all CM_PER_INTERFACE
+-policy-map type qos PM1
+-policy-map type qos test
+-policy-map type qos Backup-Replication
+-  class backup_and_Rep
+-    set qos-group 2
+-  class class-default
+-    set qos-group 0
+-policy-map type qos Backup-Replication2
+-  class backup_and_Rep
+-    police cir 8000 bps bc 200 ms conform transmit violate drop
+-policy-map type queuing Backup-Replication1
+-  class type queuing c-out-8q-q2
+-    bandwidth percent 50
+-  class type queuing c-out-8q-q3
+-    bandwidth remaining percent 0
+-  class type queuing c-out-8q-q1
+-    bandwidth remaining percent 0
+-  class type queuing c-out-8q-q4
+-    bandwidth remaining percent 0
+-  class type queuing c-out-8q-q5
+-    bandwidth remaining percent 0
+-  class type queuing c-out-8q-q6
+-    bandwidth remaining percent 0
+-  class type queuing c-out-8q-q7
+-    bandwidth remaining percent 0
+-  class type queuing c-out-8q-q-default
+-    bandwidth remaining percent 90
+-track 62 ip sla 10
+-copp profile strict
+-vxlan udp port 1024
+-snmp-server location Virtual
+-snmp-server user admin network-admin auth md5 52036704DA8793EDC8726140EB5216EDEA84 priv aes-128 37462F1D8084C3B9C47C4E72B94807AEF7D2 localizedV2key
+-snmp-server user user1 network-operator auth sha-256 322D7C7757870183CEEFCD778AD7C4E38AA0353A2DE233097656D89F8E1D333AFD17 priv aes-128 016208BFCBCDA933CF0013E86D0B909C2A340589F4742DC16E17A1D39DA6D267CBD3 localizedV2key
+-snmp-server user DING_DONG network-operator auth md5 01631621792D7A12C9EFC823368BA9E392EF priv aes-128 496317777E290871CDD2BD1921A3E8B8BB87 localizedV2key
+-snmp-server user ansibleone network-admin auth md5 17781B1DCC92D1ACE35E4A29FE405EFFF28D priv aes-128 33386354C7828FA09A2C3932F5494BFFB495 localizedV2key
+-snmp-server user temp_user2000 network-operator auth md5 5216476974060F2AD0C6CA1321D2E4A384FC priv aes-128 204F640A13365466898FA90C7DC2FBADC891 localizedV2key
+-snmp-server user mihai-temp-user network-operator auth md5 00505F2B31515864C4B7F06779DEA4FC8FA9 priv aes-128 204F640A13365466898FA90C7DC2FBADC891 localizedV2key
+-rmon event 1 log trap public description FATAL(1) owner PMON@FATAL
+-rmon event 2 log trap public description CRITICAL(2) owner PMON@CRITICAL
+-rmon event 3 log trap public description ERROR(3) owner PMON@ERROR
+-rmon event 4 log trap public description WARNING(4) owner PMON@WARNING
+-rmon event 5 log trap public description INFORMATION(5) owner PMON@INFO
+-snmp-server community Durham group network-admin
+-snmp-server community public group network-operator
+-snmp-server community ChapelHill group network-admin
+-snmp-server community TESTCOMMUNITY1234 group network-operator
+-snmp-server community TESTCOMMUNITY1234 use-ipv4acl SNMP1234
+-ntp server 1.1.1.1 prefer use-vrf default
+-ntp server 1.2.3.4 use-vrf default
+-ntp server 2.2.2.2 prefer use-vrf default
+-ntp server 6.6.6.6 use-vrf default
+-ntp server 8.8.8.8 prefer use-vrf default
+-ntp server 9.9.9.9 prefer use-vrf default
+-ntp server 132.163.97.5 prefer use-vrf default
+-ntp server 172.16.1.12 use-vrf default
+-ntp server 192.0.2.0 use-vrf default key 1
+-ntp server 192.0.2.1 use-vrf default key 1
+-ntp authenticate
+-ntp authentication-key 1 md5 QPTPWY 7
+-ntp trusted-key 1
+-login on-success log 
+-system jumbomtu 9000
+-
+-ip route 10.208.48.0/20 Null0 name cs_l2f-Adv
+-ip route 10.208.64.0/20 Null0 name cs_l2f-Adv
+-ip igmp snooping group-timeout 120
+-vlan 1-5,10-20,30,72,99-103,150,199-201,300,432-433,456,555,651,666-670,999-1000,1041,3800,3810,3951,3961,3966
+-vlan 4
+-  name mpod_vlan
+-vlan 10
+-  name DATOS
+-vlan 11
+-  name adi_ma_malego
+-vlan 14
+-  name vlan14
+-vlan 15
+-  name vlan15
+-vlan 20
+-  name VOZ
+-vlan 30
+-  name cisco
+-vlan 72
+-  name TEST
+-vlan 100
+-  name Sistemas
+-vlan 101
+-  name vl_101
+-vlan 102
+-  name XML
+-vlan 103
+-  name NXAPI_REST_VLAN
+-vlan 199
+-  name vl_199
+-vlan 200
+-  name TELEFONIA
+-vlan 201
+-  name 10.208.50.0/24_netsvc_srv
+-vlan 432
+-  name jallla1
+-  vn-segment 432
+-vlan 433
+-  name jalla1111
+-vlan 456
+-  name name
+-vlan 555
+-  name vlan555
+-vlan 666
+-  name vlan666
+-vlan 667
+-  name vlan667
+-vlan 668
+-  name ok
+-vlan 669
+-  name vlanexus-new
+-vlan 670
+-  name vlanexus-new1
+-vlan 999
+-  name Native_vlan
+-vlan 1000
+-  name blackhole
+-vlan 3800
+-  name evpn-vxlan-interface
+-  vn-segment 3800
+-vlan 3810
+-  name evpn-vxlan-interface-compute
+-  vn-segment 3810
+-vlan 3951
+-  vn-segment 5101
+-vlan 3961
+-  vn-segment 6101
+-
+-no cdp enable
+-spanning-tree port type network default
+-spanning-tree vlan 999 priority 8192
+-ip prefix-list AllowANY seq 10 permit 0.0.0.0/0 le 32 
+-ip prefix-list ExtNet-to-Management seq 10 permit 4.4.4.4/32 
+-ip prefix-list Management-to-ExtNet seq 10 permit 10.10.10.3/32 
+-ip prefix-list Management-to-ExtNet_1 seq 10 permit 10.201.207.192/26 
+-ip prefix-list PFXECINIP4CUS_ECECAGU10001010I_2 seq 20 permit 45.179.140.0/24 
+-ip prefix-list PFXECINIP4CUS_ECECAGU10001010I_2 seq 30 permit 45.179.141.0/24 
+-ip prefix-list PFXECINIP4CUS_ECECAGU10001010I_2 seq 40 permit 45.179.142.0/24 
+-ip prefix-list PFXECINIP4CUS_ECECAGU10001010I_2 seq 50 permit 45.179.143.0/24 
+-ip prefix-list PL-CUSTOMER-B-NETWORKS seq 10 permit 192.168.0.0/16 le 24 
+-ip prefix-list PL-CUSTOMER-NETWORKS seq 10 permit 192.168.0.0/16 le 24 
+-ip prefix-list TEST seq 10 permit 0.0.0.0/0 ge 24 le 32 
+-ip prefix-list TEST seq 20 permit 10.0.0.0/8 
+-route-map ALL permit 10
+-  match ip address prefix-list AllowANY 
+-route-map ExtNet-to-Management permit 10
+-  match ip address prefix-list ExtNet-to-Management 
+-  set extcommunity rt 101:100
+-route-map ExtNet-to-Management deny 20
+-route-map Management-to-ExtNet permit 10
+-  match ip address prefix-list Management-to-ExtNet 
+-  set extcommunity rt 100:100
+-route-map Management-to-ExtNet deny 20
+-route-map Management-to-ExtNet_1 permit 10
+-  match ip address prefix-list Management-to-ExtNet_1 
+-  set extcommunity rt 100:100
+-route-map Management-to-ExtNet_1 deny 20
+-route-map RM-CUSTOMER-A permit 10
+-  match ip address prefix-list PL-CUSTOMER-NETWORKS 
+-  set local-preference 200
+-route-map RM-CUSTOMER-B permit 10
+-  match ip address prefix-list PL-CUSTOMER-B-NETWORKS 
+-  set local-preference 200
+-route-map RPLECINIP4CUS_ECECAGU10001010I permit 20
+-  match ip address prefix-list PFXECINIP4CUS_ECECAGU10001010I_2 
+-  set weight 300
+-  set local-preference 400
+-  set community 26466:14 52468:1593 52468:20800 52468:20879 52468:22809 52468:22833 52468:23613 52468:23619 52468:23639 52468:23640 52468:23659 52468:23669 52468:23679 52468:23830 52468:23849 52468:23869 52468:23879 52468:23883 52468:23899 52468:24813 52468:24829 52468:24839 52468:24849 52468:24850 52468:24869 52468:24879 52468:24883 52468:24900 52468:25000 52468:25123 52468:40600 52468:40800 
+-route-map TEST permit 10
+-  match ip address prefix-list TEST 
+-route-map bgp_out permit 10
+-  set community 101:101 additive 
+-route-map dc1_global_l2f_out permit 10
+-  set community 64831:1 64831:2 additive 
+-route-map teste permit 10
+-key chain HSRP
+-  key 10
+-    key-string 7 071f2273461a0b1528190e15
+-key chain MACSEC_KEYCHAIN macsec
+-  key 1000
+-    key-octet-string 7 075f71481f084a5d43165b0f5c722d7d706737261606150705550b09060057064a4f080901000453020f085e565e04534102020d52000a76151c51490713470854 cryptographic-algorithm AES_256_CMAC
+-key chain OSPF-key
+-  key 1
+-    key-string 7 070b066f1b51322636000a0a122f0c76392227713055350027544b6e0a731d
+-    cryptographic-algorithm HMAC-SHA-256
+-key chain hsrp
+-  key 10
+-    key-string 7 071f2273461a0b1528190e15
+-ip dhcp snooping
+-service dhcp
+-ip dhcp relay
+-ip arp inspection validate src-mac dst-mac ip
+-ipv6 dhcp relay
+-vrf context ACI_mpod
+-  description Ansible_test
+-  ip pim rp-address 192.168.100.2 group-list 225.0.0.0/8 bidir
+-  ip pim rp-address 192.168.100.2 group-list 239.0.0.0/8 bidir
+-  ip pim ssm range 232.0.0.0/8
+-vrf context CUSTOMER_A
+-  rd 65000:100
+-  address-family ipv4 unicast
+-    route-target import 100:100
+-    route-target import 65000:100
+-    route-target export 65000:100
+-vrf context CUSTOMER_B
+-  ip route 10.201.207.192/26 192.168.200.2
+-  rd 65000:200
+-  address-family ipv4 unicast
+-    route-target import 65000:200
+-    route-target export 65000:200
+-    export map Management-to-ExtNet_1
+-vrf context ExtNet_VRF
+-  address-family ipv4 unicast
+-    route-target import 100:100
+-    route-target export 101:100
+-vrf context GUGUS
+-vrf context ISN
+-vrf context MPOD-IPN
+-vrf context Management_vrf
+-  address-family ipv4 unicast
+-    route-target import 101:100
+-    route-target export 100:100
+-vrf context Paycan-np-network
+-  vni 6101
+-vrf context Paycan-pr-network
+-  vni 5101
+-vrf context Prueba
+-  address-family ipv4 unicast
+-vrf context TEST
+-vrf context VRF1
+-  description My VRF1 Description
+-  vni 3800
+-  rd 1:2
+-  address-family ipv4 unicast
+-    route-target import 2:2
+-    route-target import 2:2 evpn
+-    route-target export 2:2
+-    route-target export 2:2 evpn
+-vrf context management
+-  ip route 0.0.0.0/0 10.1.1.252
+-  ip route 0.0.0.0/0 10.1.1.254
+-  ip route 0.0.0.0/0 10.10.20.254
+-  ipv6 route 0::/0 2a00:fbc:2110:100a::ffff
+-vrf context nornir
+-vrf context vpc-keepalive
+-vpc domain 1
+-  peer-switch
+-  role priority 1
+-  system-priority 1000
+-  peer-keepalive destination 10.0.0.2 source 10.0.0.1
+-  delay restore 3
+-  peer-gateway
+-  ip arp synchronize
+-vlan configuration 10
+-
+-nxapi http port 80
+-vdc resource template NEWVDC
+-
+-
+-interface Vlan1
+-  no ip redirects
+-  no ipv6 redirects
+-
+-interface Vlan10
+-  no shutdown
+-  ip igmp version 3
+-  hsrp 2 
+-
+-interface Vlan20
+-  no shutdown
+-  mac-address 00bf.0cd2.1b09 
+-
+-interface Vlan72
+-  vrf member Prueba
+-  ip address 100.10.10.1/30
+-
+-interface Vlan100
+-  description cislanka_int
+-  no shutdown
+-  vrf member CUSTOMER_A
+-  ip address 192.168.10.1/24
+-
+-interface Vlan101
+-  description hsrp cs-pr-app net icx
+-  no shutdown
+-  vrf member Paycan-np-network
+-  no ip redirects
+-  ip address 10.208.63.10/29
+-  no ipv6 redirects
+-  hsrp version 2
+-  hsrp 101 
+-    authentication md5 key-chain HSRP
+-    preempt 
+-    priority 110
+-    timers  1  3
+-    ip 10.208.63.9
+-
+-interface Vlan133
+-  no shutdown
+-
+-interface Vlan200
+-  no shutdown
+-  vrf member CUSTOMER_B
+-  ip address 192.168.200.1/24
+-
+-interface Vlan651
+-  description *** FW_Interconnect ***
+-  no ip redirects
+-  ip address 10.195.1.16/27
+-  no ipv6 redirects
+-  ip proxy-arp
+-  hsrp 251 
+-    authentication text axa10651
+-    preempt 
+-    priority 250
+-    timers  1  3
+-    ip 10.195.1.15
+-
+-interface Vlan1041
+-  description CEDIS-10.41.255.240-28
+-  no shutdown
+-  mtu 9216
+-  ip address 10.41.255.22/28
+-
+-interface Vlan3309
+-  no shutdown
+-  ip address 172.17.25.166/29
+-  hsrp version 2
+-  hsrp 3309 
+-    preempt 
+-    ip 172.17.25.164
+-
+-interface Vlan3951
+-  description Prd Overlay VXLAN VNI
+-  no shutdown
+-  mtu 9216
+-  vrf member Paycan-pr-network
+-  no ip redirects
+-  ip forward
+-  no ipv6 redirects
+-
+-interface Vlan3961
+-  description NP Overlay VXLAN VNI
+-  no shutdown
+-  mtu 9216
+-  vrf member Paycan-np-network
+-  no ip redirects
+-  ip forward
+-  no ipv6 redirects
+-
+-interface port-channel1
+-  description L2_VPCPeerLink_dc1-cs-sw-02
+-  no switchport
+-  ip address 10.1.1.10/24
+-
+-interface port-channel2
+-  description L3_VPC_dc1-cs-sw-02_Keepalive
+-  no switchport
+-  vrf member vpc_keepalive
+-  ip address 169.254.0.2/30
+-
+-interface port-channel5
+-  description dc1-cs-sw-02_e1/47_48
+-
+-interface port-channel11
+-  description sandbox1
+-  switchport mode trunk
+-  switchport trunk allowed vlan 14-16,666
+-
+-interface port-channel12
+-  description sandbox2
+-  switchport mode trunk
+-  switchport trunk allowed vlan 14-16,666
+-
+-interface port-channel41
+-  switchport mode trunk
+-  switchport trunk allowed vlan 15,100,201,456,666-668
+-
+-interface port-channel141
+-  description L2 PC dc1-cs-fw-01
+-  switchport mode trunk
+-  switchport trunk native vlan 999
+-  switchport trunk allowed vlan 100-101,200-201
+-  vpc 141
+-
+-interface port-channel142
+-  description MDC2C35 dc1-cs-fw-02 eth1/13
+-  switchport mode trunk
+-  switchport trunk native vlan 999
+-  switchport trunk allowed vlan 100-101,200-201
+-  vpc 142
+-
+-interface port-channel150
+-  description PO150
+-  switchport mode trunk
+-  switchport trunk allowed vlan 666-667
+-
+-interface port-channel999
+-  switchport mode trunk
+-  vpc 999
+-
+-interface nve1
+-  no shutdown
+-  description Overlay VXLAN
+-  host-reachability protocol bgp
+-  source-interface loopback1
+-  member vni 5101 associate-vrf
+-  member vni 6101 associate-vrf
+-
+-interface Ethernet1/1
+-  description ENLACE_SEGURO
+-  switchport mode trunk
+-  switchport access vlan 10
+-  switchport trunk native vlan 999
+-  spanning-tree port type edge
+-  mtu 9000
+-
+-interface Ethernet1/2
+-  description Chase was here
+-
+-interface Ethernet1/3
+-  description test_port_3
+-  switchport mode trunk
+-  switchport trunk native vlan 999
+-  switchport trunk allowed vlan 100-101
+-
+-interface Ethernet1/4
+-  description test_port_4
+-  no switchport
+-  ip address 10.0.0.10/24
+-  ipv6 address 10::10/128
+-  no shutdown
+-
+-interface Ethernet1/5
+-  description SPINE1 uplink
+-  no switchport
+-  mtu 9150
+-  vrf member ACI_mpod
+-  no shutdown
+-
+-interface Ethernet1/5.4
+-  mtu 9150
+-  encapsulation dot1q 4
+-  vrf member ACI_mpod
+-  ip ospf cost 500
+-  ip ospf network point-to-point
+-  ip ospf mtu-ignore
+-  ip router ospf 1 area 0.0.0.0
+-  ip pim sparse-mode
+-  ip dhcp relay address 10.0.0.1 
+-  ip dhcp relay address 10.0.0.2 
+-
+-interface Ethernet1/6
+-  description SPINE2 uplink
+-  no switchport
+-  mtu 9150
+-  vrf member ACI_mpod
+-  no shutdown
+-
+-interface Ethernet1/6.4
+-  mtu 9150
+-  encapsulation dot1q 4
+-  vrf member ACI_mpod
+-  ip ospf network point-to-point
+-  ip ospf mtu-ignore
+-  ip router ospf 1 area 0.0.0.0
+-  ip pim sparse-mode
+-  ip dhcp relay address 10.0.0.1 
+-  ip dhcp relay address 10.0.0.2 
+-
+-interface Ethernet1/7
+-  description LinkWAN_01 uplink
+-  no switchport
+-  mtu 9150
+-  vrf member ACI_mpod
+-  ip address 10.0.0.1/24
+-  ip ospf network point-to-point
+-  ip ospf mtu-ignore
+-  ip router ospf 1 area 0.0.0.0
+-  ip pim sparse-mode
+-  no shutdown
+-
+-interface Ethernet1/8
+-  description LinkWAN_02 uplink
+-  no switchport
+-  mtu 9150
+-  vrf member ACI_mpod
+-  ip address 10.0.1.1/24
+-  ip ospf network point-to-point
+-  ip ospf mtu-ignore
+-  ip router ospf 1 area 0.0.0.0
+-  ip pim sparse-mode
+-  no shutdown
+-
+-interface Ethernet1/9
+-  description access port
+-  switchport access vlan 101
+-  switchport port-security violation restrict
+-  switchport port-security mac-address sticky
+-
+-interface Ethernet1/10
+-
+-interface Ethernet1/11
+-  description access port
+-  switchport access vlan 101
+-  switchport port-security violation restrict
+-  switchport port-security mac-address sticky
+-
+-interface Ethernet1/12
+-  description trunk port
+-  no switchport
+-
+-interface Ethernet1/13
+-
+-interface Ethernet1/14
+-  description trunk port
+-  no switchport
+-
+-interface Ethernet1/15
+-  description access port
+-  switchport access vlan 101
+-  switchport port-security violation restrict
+-  switchport port-security mac-address sticky
+-
+-interface Ethernet1/16
+-  description Configured by Ansible
+-  no switchport
+-  mtu 9216
+-  ip access-group stig221081 in
+-
+-interface Ethernet1/17
+-
+-interface Ethernet1/18
+-
+-interface Ethernet1/19
+-  switchport mode trunk
+-  switchport trunk allowed vlan 3309
+-
+-interface Ethernet1/20
+-  no switchport
+-  ip address 10.10.10.1/24
+-
+-interface Ethernet1/21
+-  switchport mode trunk
+-  switchport trunk allowed vlan 14-15,100,456,666-668
+-
+-interface Ethernet1/22
+-  description To ACI SIPINE3-eth 1/32
+-  no switchport
+-  mtu 9150
+-
+-interface Ethernet1/22.4
+-  mtu 9150
+-  encapsulation dot1q 4
+-  vrf member MPOD-IPN
+-  ip address 172.16.101.1/30
+-
+-interface Ethernet1/23
+-  description To ACI SIPINE3-eth 1/32
+-  no switchport
+-  mtu 9150
+-
+-interface Ethernet1/23.4
+-  description To ACI SIPINE4- eth 1/32 vlan4
+-  mtu 9150
+-  encapsulation dot1q 4
+-  vrf member MPOD-IPN
+-  ip address 172.16.101.5/30
+-
+-interface Ethernet1/24
+-  no switchport
+-
+-interface Ethernet1/25
+-  switchport mode trunk
+-  channel-group 999 mode active
+-
+-interface Ethernet1/26
+-  description testing pyhon script
+-  switchport mode trunk
+-  switchport trunk allowed vlan 278,512,654
+-
+-interface Ethernet1/27
+-  description testing pyhon script
+-  switchport mode trunk
+-  switchport trunk allowed vlan 15,100,201,456,666-668
+-  channel-group 41 mode active
+-
+-interface Ethernet1/28
+-  description testing pyhon script
+-  switchport mode trunk
+-  switchport trunk allowed vlan 15,100,201,456,666-668
+-  channel-group 41 mode active
+-
+-interface Ethernet1/29
+-
+-interface Ethernet1/30
+-  switchport mode trunk
+-  switchport trunk allowed vlan 666-667
+-  channel-group 150 mode active
+-
+-interface Ethernet1/31
+-  switchport mode trunk
+-  switchport trunk allowed vlan 14-16,666
+-  channel-group 11 mode active
+-
+-interface Ethernet1/32
+-  switchport mode trunk
+-  switchport trunk allowed vlan 14-16,666
+-  channel-group 11 mode active
+-
+-interface Ethernet1/33
+-  switchport mode trunk
+-  switchport trunk allowed vlan 14-16,666
+-  channel-group 12 mode active
+-
+-interface Ethernet1/34
+-  switchport mode trunk
+-  switchport trunk allowed vlan 14-16,666
+-  channel-group 12 mode active
+-
+-interface Ethernet1/35
+-  description $$UCC3$$
+-
+-interface Ethernet1/36
+-
+-interface Ethernet1/37
+-
+-interface Ethernet1/38
+-
+-interface Ethernet1/39
+-  switchport access vlan 3966
+-
+-interface Ethernet1/40
+-
+-interface Ethernet1/41
+-  description MDC2C33 dc1- cs-fw-01 eth1/13
+-  switchport mode trunk
+-  switchport trunk native vlan 999
+-  switchport trunk allowed vlan 100-101,200-201
+-  channel-group 141 mode active
+-
+-interface Ethernet1/42
+-  description MDC2C33 dc1-cs-fw-01 eth1/13
+-  switchport mode trunk
+-  switchport trunk native vlan 999
+-  switchport trunk allowed vlan 100-101,200-201
+-  channel-group 142 mode active
+-
+-interface Ethernet1/43
+-  description Mdc2335 dc1-cs-sw-02 1/43
+-  no switchport
+-  channel-group 2
+-  no shutdown
+-
+-interface Ethernet1/44
+-  description Mdc2335 dc1-cs-sw-02 1/44
+-  no switchport
+-  channel-group 2
+-  no shutdown
+-
+-interface Ethernet1/45
+-  description Mdc2335 dc1-cs-sw-02 1/45
+-  no switchport
+-  channel-group 1
+-  no shutdown
+-
+-interface Ethernet1/46
+-  description Mdc2335 dc1-cs-sw-02 1/46
+-  no switchport
+-  channel-group 1
+-  no shutdown
+-
+-interface Ethernet1/47
+-  description Mdc2335 dc1-cs-sw-02 1/47
+-  channel-group 5 mode active
+-
+-interface Ethernet1/48
+-  description Mdc2335 dc1-cs-sw-02 1/48
+-  channel-group 5 mode active
+-
+-interface Ethernet1/49
+-
+-interface Ethernet1/50
+-
+-interface Ethernet1/51
+-  description Mdc2f35 dc1-core-sw-01 eth1/1
+-  no switchport
+-  mtu 9216
+-  ip address 10.192.16.1/30
+-  no shutdown
+-
+-interface Ethernet1/52
+-  description Mdc2f37 dc1-core-sw-02 eth1/1
+-  no switchport
+-  mtu 9216
+-  ip address 10.192.16.5/30
+-  no shutdown
+-
+-interface Ethernet1/53
+-  description Mdc2c33 dc1-core-sw-03 eth1/1
+-  no switchport
+-  mtu 9216
+-  ip address 10.192.16.9/30
+-  no shutdown
+-
+-interface Ethernet1/54
+-  description Mdc2c35 dc1-core-sw-04 eth1/1
+-  no switchport
+-  mtu 9216
+-  ip address 10.192.16.13/30
+-  no shutdown
+-
+-interface Ethernet1/55
+-
+-interface Ethernet1/56
+-
+-interface Ethernet1/57
+-
+-interface Ethernet1/58
+-
+-interface Ethernet1/59
+-  no switchport
+-  vrf member Prueba
+-  ip address 100.10.10.1/30
+-  no shutdown
+-
+-interface Ethernet1/60
+-
+-interface Ethernet1/61
+-
+-interface Ethernet1/62
+-
+-interface Ethernet1/63
+-
+-interface Ethernet1/64
+-
+-interface mgmt0
+-  description "MANAGEMENT PORT"
+-  ip access-group MGMT_SECURITY in
+-  vrf member management
+-  ip address 10.10.20.95/24
+-  ipv6 address 2a00:fbc:2110:100a:0:7001:5000:1/64
+-
+-interface loopback0
+-  description mesh
+-  ip address 10.10.10.1/32
+-
+-interface loopback1
+-  description Overlay VTEP
+-  ip address 10.192.32.16/32
+-  ip address 10.192.32.100/32 secondary
+-  ip address 10.192.32.101/32 secondary
+-
+-interface loopback2
+-  description *Loopback2*
+-  ip address 3.3.3.3/32
+-
+-interface loopback3
+-  description lp0-mz
+-  vrf member Management_vrf
+-  ip address 10.10.10.3/32
+-
+-interface loopback4
+-  description Loopback for MPOD OSPF
+-  vrf member MPOD-IPN
+-  ip address 44.1.1.1/32
+-
+-interface loopback5
+-  vrf member VRF1
+-
+-interface loopback20
+-  description My Learning Lab Loopback
+-
+-interface loopback24
+-  description Zend Learning Lab Loopback
+-
+-interface loopback29
+-  description My Learning Lab Loopback
+-
+-interface loopback30
+-  description My Learning Lab Loopback
+-
+-interface loopback31
+-  description My Learning Lab Loopback
+-
+-interface loopback99
+-  description BIDIR Phantom RP
+-  vrf member ACI_mpod
+-  ip address 192.168.100.1/30
+-  ip ospf network point-to-point
+-  ip ospf mtu-ignore
+-  ip router ospf 1 area 0.0.0.0
+-  ip pim sparse-mode
+-
+-interface loopback101
+-  description WHATEVER
+-  ip address 2.2.2.2/24
+-
+-interface loopback111
+-  description TESTing file
+-  ip address 111.111.10.11/32
+-
+-interface loopback112
+-  description Interface added via NETCONF
+-
+-interface loopback120
+-  description On Nexus SandBox 2024
+-  ip address 10.10.10.150/27
+-
+-interface loopback123
+-  shutdown
+-  ip address 1.2.3.1/32
+-
+-interface loopback169
+-  description Multisite-VIP
+-  ipv6 address fd00::2:0/128 tag 54321
+-  ipv6 router isis UNDERLAY
+-
+-interface loopback170
+-  description VTEP loopback interface
+-  ipv6 address fd00::b03:1/128 tag 54321
+-  ipv6 router isis UNDERLAY
+-
+-interface loopback200
+-  ip address 200.1.1.1/32
+-
+-interface loopback201
+-  ip address 201.1.1.1/32
+-
+-interface loopback555
+-icam monitor scale
+-
+-cli alias name AddVlanCloud configure terminal ; interface Ethernet1/7 ; switchport trunk allowed vlan add $1 ; exit ; show vlan id $1
+-line console
+-  exec-timeout 0
+-  terminal width  511
+-line vty
+-  session-limit 5
+-  exec-timeout 0
+-boot nxos bootflash:/nxos64-cs.10.3.3.F.bin 
+-router eigrp NXOS
+-  address-family ipv4 unicast
+-    autonomous-system 12
+-    authentication mode md5
+-router ospf 1
+-  vrf ACI_mpod
+-    router-id 111.1.1.1
+-    log-adjacency-changes detail
+-router ospf OSPF
+-  router-id 1.1.1.1
+-  rfc1583compatibility
+-router isis UNDERLAY
+-  net 49.0001.0100.0200.0001.00
+-  is-type level-2
+-  set-overload-bit on-startup 60
+-  address-family ipv6 unicast
+-router bgp 65000
+-  router-id 10.192.32.1
+-  log-neighbor-changes
+-  address-family ipv4 unicast
+-    maximum-paths 4
+-  address-family l2vpn evpn
+-    maximum-paths 8
+-    maximum-paths ibgp 4
+-  template peer SPINE_PEERS
+-    remote-as 65001
+-    update-source loopback0
+-    address-family ipv4 unicast
+-      send-community extended
+-    address-family l2vpn evpn
+-      send-community extended
+-  template peer pt_dc1_fabric-spine_template
+-    remote-as 65000
+-    update-source loopback0
+-    timers 3 10
+-    address-family ipv4 unicast
+-    address-family l2vpn evpn
+-      send-community
+-      send-community extended
+-      route-map dc1_global_l2f_in in
+-      route-map dc1_global_l2f_out out
+-  neighbor 1.1.1.1
+-    address-family ipv4 unicast
+-  neighbor 10.192.32.201
+-    inherit peer pt_dc1_fabric-spine_template
+-  neighbor 10.192.32.202
+-    inherit peer pt_dc1_fabric-spine_template
+-  neighbor 10.192.32.203
+-    inherit peer pt_dc1_fabric-spine_template
+-  neighbor 10.192.32.204
+-    inherit peer pt_dc1_fabric-spine_template
+-  neighbor 10.255.255.10
+-    inherit peer SPINE_PEERS
+-    description SPINE-01
+-  neighbor 10.255.255.11
+-    inherit peer SPINE_PEERS
+-    description SPINE-02
+-  vrf CUSTOMER_A
+-    address-family ipv4 unicast
+-      redistribute direct route-map RM-CUSTOMER-A
+-      maximum-paths ibgp 2
+-    neighbor 192.168.100.2
+-      remote-as 65100
+-      update-source Vlan100
+-      ebgp-multihop 3
+-      address-family ipv4 unicast
+-        route-map RM-CUSTOMER-A-IN in
+-        route-map RM-CUSTOMER-A-OUT out
+-  vrf CUSTOMER_B
+-    address-family ipv4 unicast
+-      redistribute direct route-map RM-CUSTOMER-B
+-      redistribute static route-map ALL
+-      maximum-paths ibgp 2
+-    neighbor 192.168.200.2
+-      remote-as 65300
+-      update-source Vlan200
+-      ebgp-multihop 3
+-      address-family ipv4 unicast
+-        route-map RM-CUSTOMER-B-IN in
+-        route-map RM-CUSTOMER-B-OUT out
+-  vrf Paycan-np-network
+-    address-family ipv4 unicast
+-      network 10.208.48.0/20
+-      maximum-paths 4
+-  vrf Paycan-pr-network
+-    address-family ipv4 unicast
+-      network 10.208.48.0/20
+-      maximum-paths 4
+-evpn
+-grpc use-vrf default
+-grpc certificate grpc
+-monitor session 1 type erspan-source
+-monitor session 3 
+-monitor session 5 
+-
+-ip sla 10
+-  icmp-echo 1.1.1.1
+-logging logfile messages 6 size 4096
+-logging server syslog01.localhost.localdomain 6 port 11001
+-logging server syslog02.localhost.localdomain 6 port 11001
+-logging server 192.168.1.100
+-logging server 10.1.1.1
+-logging server 192.0.2.10 6
+-logging source-interface mgmt0
+-logging timestamp milliseconds
+-no logging monitor
+-logging level authpri 6
+-no logging console
+-logging origin-id hostname
+-
+-
+-scheduler job name cgf_backup_plan
+-  python bootflash:/scripts/cfg_backup.py
+-  
+-end-job
+-
+-scheduler schedule name cgf_backup_plan
+-  job name cgf_backup_plan
+-  time start 2025:04:10:21:29 repeat 1:0:0
+-
+-telemetry
+-  destination-group 10
+-    host 1.1.1.1 port 42069 protocol gRPC encoding GPB 
+-    use-vrf management
+-  sensor-group xxx
+-    data-source YANG
+-  sensor-group ALLENTA-SENSOR-GROUP
+-
+ === Interface Status ===
+ 
+ --------------------------------------------------------------------------------
+@@ -1117,7 +10,7 @@
+ --------------------------------------------------------------------------------
+ Eth1/1        ENLACE_SEGURO      connected trunk     full    1000    10g        
+ Eth1/2        Chase was here     connected 1         full    1000    10g        
+-Eth1/3        test_port_3        connected trunk     full    1000    10g        
++Eth1/3        test_port_3        disabled  trunk     auto    auto    10g        
+ Eth1/4        test_port_4        connected routed    full    1000    10g        
+ Eth1/5        SPINE1 uplink      connected routed    full    1000    10g        
+ Eth1/5.4      --                 disabled  routed    auto    auto    10g        
+@@ -1328,6 +221,15 @@
+ 3961 VLAN3961                         active    Po999, Eth1/1, Eth1/25
+ 3966 VLAN3966                         active    Po999, Eth1/1, Eth1/25, Eth1/39
+ 
++=== IP ARP Summary VRF ALL ===
++
++IP ARP Table - Adjacency Summary
++
++  Resolved   : 2
++  Incomplete : 1 (Throttled : 0)
++  Unknown    : 0
++  Total      : 3
++
+ === Port-Channel Summary ===
+ 
+ Flags:  D - Down        P - Up in port-channel (members)
+@@ -1375,5 +277,315 @@
+ Eth1/51              10.192.16.1     protocol-down/link-down/admin-up   
+ Eth1/52              10.192.16.5     protocol-down/link-down/admin-up   
+ Eth1/53              10.192.16.9     protocol-down/link-down/admin-up   
+-Eth1/54              10.192.16.13    protocol-down/link-down/admin-up
++Eth1/54              10.192.16.13    protocol-down/link-down/admin-up   
++
++IP Interface Status for VRF "management"(2)
++Interface            IP Address      Interface Status
++mgmt0                10.10.20.95     protocol-up/link-up/admin-up       
++
++IP Interface Status for VRF "egress-loadbalance-resolution-"(3)
++Interface            IP Address      Interface Status
++
++IP Interface Status for VRF "ISN"(4)
++Interface            IP Address      Interface Status
++
++IP Interface Status for VRF "Paycan-np-network"(5)
++Interface            IP Address      Interface Status
++Vlan101              10.208.63.10    protocol-up/link-up/admin-up       
++Vlan3961             forward-enabled protocol-up/link-up/admin-up       
++
++IP Interface Status for VRF "Paycan-pr-network"(6)
++Interface            IP Address      Interface Status
++Vlan3951             forward-enabled protocol-up/link-up/admin-up       
++
++IP Interface Status for VRF "TEST"(7)
++Interface            IP Address      Interface Status
++
++IP Interface Status for VRF "VRF1"(8)
++Interface            IP Address      Interface Status
++
++IP Interface Status for VRF "nornir"(9)
++Interface            IP Address      Interface Status
++
++IP Interface Status for VRF "vpc-keepalive"(10)
++Interface            IP Address      Interface Status
++
++IP Interface Status for VRF "vpc_keepalive"(0)
++Interface            IP Address      Interface Status
++Po2                  169.254.0.2     protocol-down/link-down/admin-up   
++
++IP Interface Status for VRF "Management_vrf"(11)
++Interface            IP Address      Interface Status
++Lo3                  10.10.10.3      protocol-up/link-up/admin-up       
++
++IP Interface Status for VRF "ExtNet_VRF"(12)
++Interface            IP Address      Interface Status
++
++IP Interface Status for VRF "CUSTOMER_A"(35)
++Interface            IP Address      Interface Status
++Vlan100              192.168.10.1    protocol-up/link-up/admin-up       
++
++IP Interface Status for VRF "CUSTOMER_B"(36)
++Interface            IP Address      Interface Status
++Vlan200              192.168.200.1   protocol-up/link-up/admin-up       
++
++IP Interface Status for VRF "Prueba"(62)
++Interface            IP Address      Interface Status
++Vlan72               100.10.10.1     protocol-down/link-down/admin-down 
++Eth1/59              100.10.10.1     protocol-down/link-down/admin-up   
++
++IP Interface Status for VRF "MPOD-IPN"(69)
++Interface            IP Address      Interface Status
++Lo4                  44.1.1.1        protocol-up/link-up/admin-up       
++Eth1/22.4            172.16.101.1    protocol-down/link-down/admin-down 
++Eth1/23.4            172.16.101.5    protocol-down/link-down/admin-down 
++
++IP Interface Status for VRF "GUGUS"(70)
++Interface            IP Address      Interface Status
++
++IP Interface Status for VRF "ACI_mpod"(71)
++Interface            IP Address      Interface Status
++Lo99                 192.168.100.1   protocol-up/link-up/admin-up       
++Eth1/7               10.0.0.1        protocol-down/link-down/admin-up   
++Eth1/8               10.0.1.1        protocol-down/link-down/admin-up
+   
++=== Running Configuration ===
++
++IP Route Table for VRF "default"
++Total number of routes: 26
++Total number of paths:  31
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  local          : 9            None
++  direct         : 9     
++  static         : 2     
++  broadcast      : 11    
++
++Number of routes per mask-length:
++  /8 : 1       /20: 2       /24: 2       /27: 1       /28: 1       
++  /32: 19      
++
++
++IP Route Table for VRF "management"
++Total number of routes: 10
++Total number of paths:  10
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  am             : 2            None
++  local          : 1     
++  direct         : 1     
++  static         : 1     
++  broadcast      : 5     
++
++Number of routes per mask-length:
++  /0 : 1       /8 : 1       /24: 1       /32: 7       
++
++
++IP Route Table for VRF "egress-loadbalance-resolution-"
++Total number of routes: 3
++Total number of paths:  3
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  broadcast      : 3            None
++
++Number of routes per mask-length:
++  /8 : 1       /32: 2       
++
++
++IP Route Table for VRF "ISN"
++Total number of routes: 3
++Total number of paths:  3
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  broadcast      : 3            None
++
++Number of routes per mask-length:
++  /8 : 1       /32: 2       
++
++
++IP Route Table for VRF "Paycan-np-network"
++Total number of routes: 8
++Total number of paths:  8
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  local          : 1            None
++  direct         : 1     
++  broadcast      : 5     
++  hsrp           : 1     
++
++Number of routes per mask-length:
++  /8 : 1       /29: 1       /32: 6       
++
++
++IP Route Table for VRF "Paycan-pr-network"
++Total number of routes: 3
++Total number of paths:  3
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  broadcast      : 3            None
++
++Number of routes per mask-length:
++  /8 : 1       /32: 2       
++
++
++IP Route Table for VRF "TEST"
++Total number of routes: 3
++Total number of paths:  3
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  broadcast      : 3            None
++
++Number of routes per mask-length:
++  /8 : 1       /32: 2       
++
++
++IP Route Table for VRF "VRF1"
++Total number of routes: 3
++Total number of paths:  3
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  broadcast      : 3            None
++
++Number of routes per mask-length:
++  /8 : 1       /32: 2       
++
++
++IP Route Table for VRF "nornir"
++Total number of routes: 3
++Total number of paths:  3
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  broadcast      : 3            None
++
++Number of routes per mask-length:
++  /8 : 1       /32: 2       
++
++
++IP Route Table for VRF "vpc-keepalive"
++Total number of routes: 3
++Total number of paths:  3
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  broadcast      : 3            None
++
++Number of routes per mask-length:
++  /8 : 1       /32: 2       
++
++
++IP Route Table for VRF "Management_vrf"
++Total number of routes: 4
++Total number of paths:  5
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  local          : 1            None
++  direct         : 1     
++  broadcast      : 3     
++
++Number of routes per mask-length:
++  /8 : 1       /32: 3       
++
++
++IP Route Table for VRF "ExtNet_VRF"
++Total number of routes: 4
++Total number of paths:  4
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  broadcast      : 3            None
++  bgp-65000      : 1     
++
++Number of routes per mask-length:
++  /8 : 1       /26: 1       /32: 2       
++
++
++IP Route Table for VRF "CUSTOMER_A"
++Total number of routes: 8
++Total number of paths:  8
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  local          : 1            None
++  direct         : 1     
++  broadcast      : 5     
++  bgp-65000      : 1     
++
++Number of routes per mask-length:
++  /8 : 1       /24: 1       /26: 1       /32: 5       
++
++
++IP Route Table for VRF "CUSTOMER_B"
++Total number of routes: 8
++Total number of paths:  8
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  local          : 1            None
++  direct         : 1     
++  static         : 1     
++  broadcast      : 5     
++
++Number of routes per mask-length:
++  /8 : 1       /24: 1       /26: 1       /32: 5       
++
++
++IP Route Table for VRF "ACI_mpod"
++Total number of routes: 7
++Total number of paths:  7
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  local          : 1            None
++  direct         : 1     
++  broadcast      : 5     
++
++Number of routes per mask-length:
++  /8 : 1       /30: 1       /32: 5       
++
++
++IP Route Table for VRF "Prueba"
++Total number of routes: 3
++Total number of paths:  3
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  broadcast      : 3            None
++
++Number of routes per mask-length:
++  /8 : 1       /32: 2       
++
++
++IP Route Table for VRF "MPOD-IPN"
++Total number of routes: 4
++Total number of paths:  5
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  local          : 1            None
++  direct         : 1     
++  broadcast      : 3     
++
++Number of routes per mask-length:
++  /8 : 1       /32: 3       
++
++
++IP Route Table for VRF "GUGUS"
++Total number of routes: 3
++Total number of paths:  3
++
++Unicast paths:
++Best paths per protocol:      Backup paths per protocol:
++  broadcast      : 3            None
++
++Number of routes per mask-length:
++  /8 : 1       /32: 2

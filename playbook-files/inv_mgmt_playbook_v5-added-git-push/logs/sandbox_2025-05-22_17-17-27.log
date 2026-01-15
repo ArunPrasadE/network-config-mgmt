@@ -1,0 +1,28 @@
+
+PLAY [Gather running configuration from vswitch switches] **********************
+
+TASK [Gather facts manually] ***************************************************
+[WARNING]: ansible-pylibssh not installed, falling back to paramiko
+ok: [sandbox]
+
+TASK [Save vswitch running configuration to a file] ****************************
+ok: [sandbox]
+
+TASK [Write vswitch output to a host-specific file] ****************************
+changed: [sandbox]
+
+PLAY [Gather running configuration from Nexus switches] ************************
+skipping: no hosts matched
+
+PLAY [Gather running configuration from ios switches] **************************
+skipping: no hosts matched
+
+PLAY [Gather running configuration from cumulus switches] **********************
+skipping: no hosts matched
+
+PLAY [Gather configuration from FortiGate firewalls via SSH] *******************
+skipping: no hosts matched
+
+PLAY RECAP *********************************************************************
+sandbox                    : ok=3    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

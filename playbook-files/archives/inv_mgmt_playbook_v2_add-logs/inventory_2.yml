@@ -1,0 +1,24 @@
+---
+all:
+  children:
+    nxos:
+      hosts:
+        # No hosts currently
+    ios:
+      hosts:
+        test-ngt-frsw-001:
+    vswitch:
+      hosts:
+        sandbox:
+    cumulus:
+      hosts:
+        #test-edge-01:
+        #test-edge-02:
+    local:
+      hosts:
+        #localhost:
+         # ansible_connection: local
+            # The following hosts are included in localhost.
+            # Since, these devices do not have dedicated connection via ansible, they are executed via a python script
+            # test_fire001_jpc1
+

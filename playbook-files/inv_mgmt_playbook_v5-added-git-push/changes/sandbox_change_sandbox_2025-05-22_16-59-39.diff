@@ -1,0 +1,19 @@
+--- /tmp/tmp.Y9iLyLJeJy	2025-05-22 16:59:47.222771074 +0900
++++ /tmp/tmp.1pylHhUWmT	2025-05-22 16:59:47.223771073 +0900
+@@ -10,7 +10,7 @@
+ --------------------------------------------------------------------------------
+ Eth1/1        ENLACE_SEGURO      connected trunk     full    1000    10g        
+ Eth1/2        Chase was here     connected 1         full    1000    10g        
+-Eth1/3        test_port_3        connected trunk     full    1000    10g        
++Eth1/3        test_port_3        disabled  trunk     auto    auto    10g        
+ Eth1/4        test_port_4        connected routed    full    1000    10g        
+ Eth1/5        SPINE1 uplink      connected routed    full    1000    10g        
+ Eth1/5.4      --                 disabled  routed    auto    auto    10g        
+@@ -1151,6 +1151,7 @@
+ 
+ interface Ethernet1/3
+   description test_port_3
++  shutdown
+   switchport mode trunk
+   switchport trunk native vlan 999
+   switchport trunk allowed vlan 100-101

@@ -1,0 +1,82 @@
+--- /tmp/tmp.Z9eI81xHYY	2025-05-22 17:02:50.019433811 +0900
++++ /tmp/tmp.3NbE8jGOns	2025-05-22 17:02:50.020433809 +0900
+@@ -10,7 +10,7 @@
+ --------------------------------------------------------------------------------
+ Eth1/1        ENLACE_SEGURO      connected trunk     full    1000    10g        
+ Eth1/2        Chase was here     connected 1         full    1000    10g        
+-Eth1/3        test_port_3        disabled  trunk     auto    auto    10g        
++Eth1/3        test_port_3        connected trunk     full    1000    10g        
+ Eth1/4        test_port_4        connected routed    full    1000    10g        
+ Eth1/5        SPINE1 uplink      connected routed    full    1000    10g        
+ Eth1/5.4      --                 disabled  routed    auto    auto    10g        
+@@ -115,6 +115,7 @@
+ Lo170         VTEP loopback inte connected routed    auto    auto    --         
+ Lo200         --                 connected routed    auto    auto    --         
+ Lo201         --                 connected routed    auto    auto    --         
++Lo300         --                 connected routed    auto    auto    --         
+ Lo555         --                 connected routed    auto    auto    --         
+ 
+ --------------------------------------------------------------------------------
+@@ -226,9 +227,9 @@
+ IP ARP Table - Adjacency Summary
+ 
+   Resolved   : 2
+-  Incomplete : 0 (Throttled : 0)
++  Incomplete : 1 (Throttled : 0)
+   Unknown    : 0
+-  Total      : 2
++  Total      : 3
+ 
+ === Port-Channel Summary ================================
+ 
+@@ -271,6 +272,7 @@
+ Lo123                1.2.3.1         protocol-down/link-down/admin-down 
+ Lo200                200.1.1.1       protocol-up/link-up/admin-up       
+ Lo201                201.1.1.1       protocol-up/link-up/admin-up       
++Lo300                100.200.200.200 protocol-up/link-up/admin-up       
+ Po1                  10.1.1.10       protocol-down/link-down/admin-up   
+ Eth1/4               10.0.0.10       protocol-up/link-up/admin-up       
+ Eth1/20              10.10.10.1      protocol-down/link-down/admin-down 
+@@ -352,19 +354,19 @@
+ === IP Route Summary VRF ALL =============================
+ 
+ IP Route Table for VRF "default"
+-Total number of routes: 26
+-Total number of paths:  31
++Total number of routes: 27
++Total number of paths:  33
+ 
+ Unicast paths:
+ Best paths per protocol:      Backup paths per protocol:
+-  local          : 9            None
+-  direct         : 9     
++  local          : 10           None
++  direct         : 10    
+   static         : 2     
+   broadcast      : 11    
+ 
+ Number of routes per mask-length:
+   /8 : 1       /20: 2       /24: 2       /27: 1       /28: 1       
+-  /32: 19      
++  /32: 20      
+ 
+ 
+ IP Route Table for VRF "management"
+@@ -1151,7 +1153,6 @@
+ 
+ interface Ethernet1/3
+   description test_port_3
+-  shutdown
+   switchport mode trunk
+   switchport trunk native vlan 999
+   switchport trunk allowed vlan 100-101
+@@ -1559,6 +1560,9 @@
+ interface loopback201
+   ip address 201.1.1.1/32
+ 
++interface loopback300
++  ip address 100.200.200.200/32
++
+ interface loopback555
+ icam monitor scale
+ 
