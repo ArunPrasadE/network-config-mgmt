@@ -1,0 +1,4 @@
+# Cisco NX-OS Virtual Switch connection settings
+# Credentials are in group_vars/all.yml (vault-encrypted)
+ansible_connection: ansible.netcommon.network_cli
+ansible_network_os: cisco.nxos.nxos

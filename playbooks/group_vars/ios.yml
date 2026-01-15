@@ -1,0 +1,7 @@
+# Cisco IOS connection settings
+# Credentials are in group_vars/all.yml (vault-encrypted)
+ansible_connection: ansible.netcommon.network_cli
+ansible_network_os: cisco.ios.ios
+ansible_ssh_common_args: '-oKexAlgorithms=+diffie-hellman-group1-sha1 -oHostKeyAlgorithms=+ssh-rsa'
+ansible_become: yes
+ansible_become_method: enable

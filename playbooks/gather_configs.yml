@@ -1,0 +1,168 @@
+---
+# Consolidated Network Configuration Gathering Playbook
+# Supports: Cisco NX-OS, Cisco IOS, Cumulus Linux, FortiGate
+
+- name: Gather running configuration from NX-OS devices
+  hosts: nxos:vswitch
+  gather_facts: no
+  ignore_unreachable: yes
+  ignore_errors: yes
+  vars:
+    output_dir: "{{ playbook_dir }}/../output/configs"
+    timestamp: "{{ lookup('pipe', 'date +%Y-%m-%d_%H-%M-%S') }}"
+  tasks:
+    - name: Gather Ansible facts
+      ansible.builtin.setup:
+
+    - name: Run NX-OS show commands
+      cisco.nxos.nxos_command:
+        commands:
+          - show interface status
+          - show vlan brief
+          - show port-channel summary
+          - show ip interface brief vrf all
+          - show ip route summary vrf all
+          - show running-config
+      register: nxos_output
+
+    - name: Write NX-OS config to file
+      ansible.builtin.copy:
+        content: |
+          === Interface Status ====================================
+          {{ nxos_output.stdout[0] }}
+
+          === VLAN Brief ==========================================
+          {{ nxos_output.stdout[1] }}
+
+          === Port-Channel Summary ================================
+          {{ nxos_output.stdout[2] }}
+
+          === IP Interface Brief ==================================
+          {{ nxos_output.stdout[3] }}
+
+          === IP Route Summary ====================================
+          {{ nxos_output.stdout[4] }}
+
+          === Running Configuration ================================
+          {{ nxos_output.stdout[5] }}
+        dest: "{{ output_dir }}/{{ inventory_hostname }}_{{ timestamp }}.json"
+      delegate_to: localhost
+
+
+- name: Gather running configuration from IOS devices
+  hosts: ios
+  gather_facts: no
+  ignore_unreachable: yes
+  ignore_errors: yes
+  vars:
+    output_dir: "{{ playbook_dir }}/../output/configs"
+    timestamp: "{{ lookup('pipe', 'date +%Y-%m-%d_%H-%M-%S') }}"
+  tasks:
+    - name: Gather Ansible facts
+      ansible.builtin.setup:
+
+    - name: Run IOS show commands
+      cisco.ios.ios_command:
+        commands:
+          - show interface status
+          - show vlan brief
+          - show arp summary
+          - show etherchannel summary
+          - show ip interface brief | exclude unassigned
+          - show ip route summary
+          - show running-config
+      register: ios_output
+
+    - name: Write IOS config to file
+      ansible.builtin.copy:
+        content: |
+          === Interface Status ====================================
+          {{ ios_output.stdout[0] }}
+
+          === VLAN Brief ==========================================
+          {{ ios_output.stdout[1] }}
+
+          === ARP Summary =========================================
+          {{ ios_output.stdout[2] }}
+
+          === Etherchannel Summary ================================
+          {{ ios_output.stdout[3] }}
+
+          === IP Interface Brief ==================================
+          {{ ios_output.stdout[4] }}
+
+          === IP Route Summary ====================================
+          {{ ios_output.stdout[5] }}
+
+          === Running Configuration ================================
+          {{ ios_output.stdout[6] }}
+        dest: "{{ output_dir }}/{{ inventory_hostname }}_{{ timestamp }}.json"
+      delegate_to: localhost
+
+
+- name: Gather running configuration from Cumulus devices
+  hosts: cumulus
+  gather_facts: no
+  ignore_unreachable: yes
+  ignore_errors: yes
+  vars:
+    output_dir: "{{ playbook_dir }}/../output/configs"
+    timestamp: "{{ lookup('pipe', 'date +%Y-%m-%d_%H-%M-%S') }}"
+  tasks:
+    - name: Gather Ansible facts
+      ansible.builtin.setup:
+
+    - name: Get Cumulus configuration
+      ansible.builtin.command: net show configuration commands
+      become: yes
+      register: cumulus_conf
+
+    - name: Get Cumulus interface status
+      ansible.builtin.command: net show interface
+      become: yes
+      register: cumulus_intf
+
+    - name: Write Cumulus config to file
+      ansible.builtin.copy:
+        content: |
+          === Running Configuration ================================
+          {{ cumulus_conf.stdout }}
+
+          === Interface Status ====================================
+          {{ cumulus_intf.stdout }}
+        dest: "{{ output_dir }}/{{ inventory_hostname }}_{{ timestamp }}.json"
+      delegate_to: localhost
+
+
+- name: Gather running configuration from FortiGate devices
+  hosts: fortigate
+  gather_facts: no
+  ignore_unreachable: yes
+  ignore_errors: yes
+  vars:
+    output_dir: "{{ playbook_dir }}/../output/configs"
+    timestamp: "{{ lookup('pipe', 'date +%Y-%m-%d_%H-%M-%S') }}"
+  tasks:
+    - name: Gather Ansible facts
+      ansible.builtin.setup:
+      delegate_to: localhost
+
+    - name: Get FortiGate configuration via SSH
+      ansible.builtin.script:
+        cmd: "{{ playbook_dir }}/../scripts/fortigate_ssh.py"
+      args:
+        executable: python3
+      register: fortigate_output
+      delegate_to: localhost
+
+    - name: Parse FortiGate hostname
+      ansible.builtin.set_fact:
+        fortigate_hostname: "{{ (fortigate_output.stdout | from_json).hostname | default(inventory_hostname) }}"
+
+    - name: Write FortiGate config to file
+      ansible.builtin.copy:
+        content: |
+          === Running Configuration ================================
+          {{ fortigate_output.stdout }}
+        dest: "{{ output_dir }}/{{ fortigate_hostname }}_{{ timestamp }}.json"
+      delegate_to: localhost

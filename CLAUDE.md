@@ -4,86 +4,135 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Network automation framework for collecting and tracking configuration changes across multi-vendor network devices. Uses Ansible playbooks to gather running configurations from Cisco NX-OS, Cisco IOS, Cumulus Linux, and FortiGate firewalls, then compares configs over time to detect and report changes.
+Multi-vendor network configuration backup and change tracking system. Uses Ansible playbooks to gather running configurations from Cisco NX-OS, Cisco IOS, Cumulus Linux, and FortiGate firewalls. Automatically detects configuration changes and generates diff reports.
 
-## Architecture
+## Directory Structure
 
-### Directory Structure
-
-- `playbook-files/inv_mgmt_playbook_v5-added-git-push/` - Current active playbook version
-  - `show_run_each.yml` - Main Ansible playbook with per-device-type plays
-  - `inventory_2.yml` - Ansible inventory defining host groups (nxos, ios, vswitch, cumulus, local)
-  - `group_vars/` - Connection settings per device type (ansible_connection, credentials)
-  - `host_vars/` - Per-host variable overrides
-  - `python_scripts/` - Helper scripts including FortiGate SSH config retrieval
-  - `running_config/` - Output directory for collected device configs
-  - `changes/` - Output directory for diff files when changes detected
-  - `logs/` - Per-host playbook execution logs
-- `playbook-files/archives/` - Previous playbook versions (v1-v4)
-- `documentations/` - Technical documentation for scripts and playbooks
-
-### Playbook Structure
-
-The main playbook (`show_run_each.yml`) contains separate plays for each device type:
-- **vswitch/nxos**: Uses `cisco.nxos.nxos_command` for NX-OS switches
-- **ios**: Uses `cisco.ios.ios_command` for IOS switches
-- **cumulus**: Uses `ansible.builtin.command` with become for Linux-based switches
-- **fortigate**: Runs Python script via `local` host group for SSH-based config retrieval
-
-Each play gathers multiple show commands and writes combined output to timestamped files.
-
-### Shell Script Workflow
-
-`run_playbook_v2.sh` orchestrates the automation:
-1. Extracts hosts dynamically from inventory using `ansible-inventory` + `jq`
-2. Runs playbook per-host with output to timestamped log files
-3. Calls `diff_and_cleanup()` function to compare latest two configs
-4. Filters out timestamp lines before comparison
-5. If different: creates diff file, deletes old config (keeps new as baseline)
-6. If identical: deletes new config file (no change)
+```
+NetworkAutomation/
+├── playbooks/
+│   ├── gather_configs.yml    # Main playbook (all device types)
+│   ├── inventory.yml         # Host inventory
+│   ├── group_vars/           # Connection settings + credentials (vault-encrypted)
+│   └── host_vars/            # Per-host overrides
+├── scripts/
+│   ├── orchestrator.py       # Main execution script
+│   ├── fortigate_ssh.py      # FortiGate SSH config retrieval
+│   └── setup_vault.sh        # Vault encryption setup helper
+├── output/
+│   ├── configs/              # Collected device configs
+│   ├── changes/              # Diff files when changes detected
+│   └── logs/                 # Playbook execution logs
+├── docs/                     # Technical documentation
+├── Dockerfile                # Container definition
+├── ansible.cfg               # Ansible configuration
+├── requirements.txt          # Python dependencies
+└── .env.example              # Credentials template
+```
 
 ## Commands
 
-### Build Docker Image
-```sh
-# ARM architecture
-docker buildx build --platform linux/arm64 -t jpc1-mgmt:v.1 .
+### Run Configuration Backup
 
-# AMD architecture
-docker buildx build --platform linux/amd64 -t jpc1-mgmt:v.1 .
+```bash
+# Run for all hosts
+python scripts/orchestrator.py
+
+# Run with Ansible Vault
+python scripts/orchestrator.py --vault-password-file vault_password.txt
+
+# Run for single host
+python scripts/orchestrator.py --host sandbox
+
+# Run with git auto-commit
+python scripts/orchestrator.py --git
 ```
 
-### Create and Run Container
-```sh
-docker run -it --name container-name jpc1-mgmt:v.1
+### Docker
+
+```bash
+# Build image
+docker build -t network-config-backup .
+
+# Run container
+docker run -it --name netbackup network-config-backup
+
+# Run with mounted output directory
+docker run -it -v $(pwd)/output:/app/output network-config-backup
 ```
 
-### Run Playbook (inside container)
-```sh
-# Make script executable first
-chmod +x /inv_mgmt_playbook/shell_scripts/run_playbook_v2.sh
+### Ansible Vault
 
-# Manual execution
-/inv_mgmt_playbook/shell_scripts/run_playbook_v2.sh
+```bash
+# Initial setup (encrypt credentials)
+./scripts/setup_vault.sh
 
-# Via cron (e.g., every 5 minutes)
-*/5 * * * * /inv_mgmt_playbook/shell_scripts/run_playbook_v2.sh
+# Edit encrypted credentials
+ansible-vault edit playbooks/group_vars/all.yml --vault-password-file vault_password.txt
+
+# Run playbook manually
+ansible-playbook playbooks/gather_configs.yml --vault-password-file vault_password.txt
 ```
 
-### Run Playbook for Single Host
-```sh
-ansible-playbook /inv_mgmt_playbook/show_run_each.yml -i /inv_mgmt_playbook/inventory_2.yml --limit hostname
+### Cron Setup (inside container)
+
+```bash
+# Edit crontab
+crontab -e
+
+# Run every 5 minutes
+*/5 * * * * cd /app && python scripts/orchestrator.py --vault-password-file vault_password.txt >> /var/log/netbackup.log 2>&1
+```
+
+## Architecture
+
+### Orchestrator Flow
+
+1. Extract hosts from `inventory.yml` using `ansible-inventory`
+2. Run `gather_configs.yml` playbook per host
+3. Compare new config with previous baseline
+4. If changed: create diff file, remove old config, keep new as baseline
+5. If identical: remove new config (no changes)
+6. Optional: commit and push to git
+
+### Supported Devices
+
+| Group | Device Type | Connection |
+|-------|-------------|------------|
+| nxos | Cisco NX-OS switches | network_cli |
+| vswitch | Cisco NX-OS virtual switches | network_cli |
+| ios | Cisco IOS switches | network_cli |
+| cumulus | Cumulus Linux switches | ssh |
+| fortigate | FortiGate firewalls | SSH via Python script |
+
+### Credentials Management
+
+Credentials are stored in `playbooks/group_vars/all.yml` and should be encrypted with Ansible Vault:
+
+```yaml
+ansible_user: admin
+ansible_password: "your-password"
+fortigate_host: "192.168.1.99"
+fortigate_user: "admin"
+fortigate_password: "your-password"
+```
+
+FortiGate script reads from environment variables: `FORTIGATE_HOST`, `FORTIGATE_USER`, `FORTIGATE_PASSWORD`
+
+## File Naming Convention
+
+All config files use standardized naming:
+```
+{hostname}_{YYYY-MM-DD_HH-MM-SS}.json
+```
+
+Diff files:
+```
+{hostname}_change_{YYYY-MM-DD_HH-MM-SS}.diff
 ```
 
 ## Dependencies
 
-- Ansible with collections: `cisco.nxos`, `cisco.ios`
-- Python packages: `paramiko` (for FortiGate SSH)
-- System tools: `jq`, `bat` (batcat for diff display)
-
-## Device Group Credentials
-
-Connection settings are in `group_vars/`:
-- `ansible_connection`: `ansible.netcommon.network_cli` for network devices
-- `ansible_network_os`: Device OS type (nxos, ios, etc.)
-- Credentials stored in group_vars files (note: credentials are currently in plaintext)
+- Python: paramiko, python-dotenv
+- Ansible Collections: cisco.nxos, cisco.ios, ansible.netcommon
+- System: jq, bat (optional, for diff display)

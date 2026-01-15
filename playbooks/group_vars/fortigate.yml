@@ -1,0 +1,4 @@
+# FortiGate connection settings
+# Uses SSH via Python script (fortigate_ssh.py)
+# Credentials are in group_vars/all.yml (vault-encrypted)
+ansible_connection: local

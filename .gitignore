@@ -1,0 +1,29 @@
+# Output directories (large/generated files)
+output/configs/*
+output/changes/*
+output/logs/*
+!output/configs/.gitkeep
+!output/changes/.gitkeep
+!output/logs/.gitkeep
+
+# Environment and secrets
+.env
+*.vault
+vault_password.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Ansible
+*.retry

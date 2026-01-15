@@ -1,0 +1,11 @@
+# Common credentials - ENCRYPT THIS FILE WITH ANSIBLE VAULT
+# ansible-vault encrypt playbooks/group_vars/all.yml
+
+# Default network device credentials
+ansible_user: admin
+ansible_password: "changeme"
+
+# FortiGate SSH credentials
+fortigate_host: "192.168.1.99"
+fortigate_user: "admin"
+fortigate_password: "changeme"

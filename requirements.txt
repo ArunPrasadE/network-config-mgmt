@@ -1,0 +1,4 @@
+# Python dependencies for NetworkAutomation
+ansible>=2.9
+paramiko>=2.7
+python-dotenv>=0.19

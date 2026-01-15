@@ -1,13 +1,14 @@
-# 1. Create Docker Container (Ubuntu 20.04) and install dependencies for Ansible automation
-# --------------------------------------------------------------------------------
+# Network Configuration Backup System
+# Docker container with Ansible and Python for multi-vendor network automation
+# -------------------------------------------------------------------------------
 
-# Tells Docker to use the official Ubuntu 20.04 image as the base
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
-# Prevents the system from asking questions during software installations
+# Prevent interactive prompts during installation
 ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
 
-# Installs the required software
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     software-properties-common \
     python3 \
@@ -15,7 +16,6 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     ansible \
     cron \
-    fontconfig-config \
     vim \
     sshpass \
     libssh-4 \
@@ -26,26 +26,38 @@ RUN apt-get update && apt-get install -y \
     jq \
     tzdata \
     git \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
+# Set working directory
+WORKDIR /app
 
-# Copy the playbook files to new Docker image (The file should be under the same dir with Dockerfile)
-COPY ./playbook-files/inv_mgmt_playbook_v5-added-git-push /inv_mgmt_playbook
-COPY ./documentations /documentation
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Default command when the container runs
+# Install Ansible collections
+RUN ansible-galaxy collection install cisco.nxos cisco.ios fortinet.fortios ansible.netcommon
+
+# Copy project files
+COPY ansible.cfg .
+COPY playbooks/ ./playbooks/
+COPY scripts/ ./scripts/
+COPY docs/ ./docs/
+
+# Create output directories
+RUN mkdir -p output/configs output/changes output/logs
+
+# Make scripts executable
+RUN chmod +x scripts/*.py scripts/*.sh
+
+# Set timezone (uncomment your timezone)
+# JST (Japan)
+# RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && echo "Asia/Tokyo" > /etc/timezone
+# IST (India)
+# RUN ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && echo "Asia/Kolkata" > /etc/timezone
+# UTC (default)
+RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime && echo "UTC" > /etc/timezone
+
+# Default command
 CMD ["bash"]
-
-RUN pip install --upgrade ansible
-RUN pip install paramiko
-
-# Set date and time 
-## to JST
-# RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
-# echo "Asia/Tokyo" > /etc/timezone && \
-# RUN dpkg-reconfigure -f noninteractive tzdata
-
-## to IST
-# RUN ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
-# echo "Asia/Kolkata" > /etc/timezone && \
-# RUN dpkg-reconfigure -f noninteractive tzdata

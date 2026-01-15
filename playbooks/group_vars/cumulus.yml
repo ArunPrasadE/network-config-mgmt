@@ -1,0 +1,4 @@
+# Cumulus Linux connection settings
+# Credentials are in group_vars/all.yml (vault-encrypted)
+ansible_connection: ssh
+ansible_network_os: linux
