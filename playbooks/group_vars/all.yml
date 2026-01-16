@@ -2,8 +2,8 @@
 # ansible-vault encrypt playbooks/group_vars/all.yml
 
 # Default network device credentials
-ansible_user: admin
-ansible_password: "Admin_1234!"
+ansible_user: arun.elango
+ansible_password: "Pe_0dsHq_7GdwI5"
 
 # FortiGate SSH credentials
 fortigate_host: "192.168.1.99"
