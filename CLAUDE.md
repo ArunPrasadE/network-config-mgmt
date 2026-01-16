@@ -13,6 +13,22 @@ NetworkAutomation/
 ├── .claude/skills/           # Claude Code skills
 │   ├── update-claude-md/     # Skill to update this file
 │   └── git-setup/            # Skill for git operations
+├── backend/                  # FastAPI backend server
+│   ├── main.py               # API endpoints
+│   └── requirements.txt      # Backend Python dependencies
+├── frontend/                 # React + Vite frontend
+│   ├── src/
+│   │   ├── App.jsx           # Main application component
+│   │   ├── main.jsx          # React entry point
+│   │   ├── index.css         # Global styles (Tailwind)
+│   │   └── components/
+│   │       ├── AddHostModal.jsx     # Modal for adding new hosts
+│   │       ├── ConfigDashboard.jsx  # Parsed config sections display
+│   │       ├── DiffViewer.jsx       # Visual diff with highlighting
+│   │       ├── HostSelector.jsx     # Dropdown for host selection
+│   │       └── LogsModal.jsx        # Log viewer with error highlighting
+│   ├── package.json          # Node dependencies
+│   └── vite.config.js        # Vite configuration
 ├── playbooks/
 │   ├── gather_configs.yml    # Main playbook (all device types)
 │   ├── inventory.yml         # Host inventory
@@ -27,6 +43,9 @@ NetworkAutomation/
 │   ├── changes/              # Diff files when changes detected
 │   └── logs/                 # Playbook execution logs
 ├── docs/                     # Technical documentation
+├── start-dev.sh              # Start both frontend and backend
+├── start-backend.sh          # Start FastAPI backend only
+├── start-frontend.sh         # Start React frontend only
 ├── Dockerfile                # Container definition
 ├── ansible.cfg               # Ansible configuration
 ├── requirements.txt          # Python dependencies
@@ -40,7 +59,28 @@ NetworkAutomation/
 
 ## Commands
 
-### Run Configuration Backup
+### Web Frontend (Development)
+
+```bash
+# Start both backend and frontend
+./start-dev.sh
+
+# Or start separately:
+./start-backend.sh   # FastAPI on http://localhost:8000
+./start-frontend.sh  # React on http://localhost:5173
+```
+
+The web frontend provides:
+- Host selection dropdown with all configured hosts
+- Add new hosts form (updates inventory.yml and host_vars)
+- RUN button to collect configuration from selected host
+- Dashboard with parsed config sections (expandable)
+- Visual diff highlighting for changed configurations
+- Logs popup with error highlighting
+
+API documentation available at http://localhost:8000/docs
+
+### Run Configuration Backup (CLI)
 
 ```bash
 # Run for all hosts
@@ -60,17 +100,25 @@ python scripts/orchestrator.py --git
 
 ```bash
 # Build image
-docker build -t network-config-backup .
+docker build -t network-config-mgmt .
+
+# Run backend API server in Docker (with volume mount for persistence)
+docker run -d --name netconfig-backend -p 8000:8000 \
+  -v $(pwd):/app -w /app \
+  network-config-mgmt python3 -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+
+# Run orchestrator directly in Docker (with host key checking disabled)
+docker exec -e ANSIBLE_HOST_KEY_CHECKING=False netconfig-backend \
+  python3 scripts/orchestrator.py --host sandbox
 
 # Run container interactively
-docker run -it --name netbackup network-config-backup bash
+docker run -it --name netbackup network-config-mgmt bash
 
-# Run orchestrator with mounted output
-docker run --rm -v $(pwd)/output:/app/output network-config-backup python3 scripts/orchestrator.py
-
-# Run for specific host
-docker run --rm -v $(pwd)/output:/app/output network-config-backup python3 scripts/orchestrator.py --host <hostname>
+# Stop and remove container
+docker stop netconfig-backend && docker rm netconfig-backend
 ```
+
+**Note**: The `ANSIBLE_HOST_KEY_CHECKING=False` environment variable is required because the Docker container's `/app` directory is world-writable, causing Ansible to ignore `ansible.cfg`.
 
 ### Ansible Vault
 
@@ -144,6 +192,47 @@ Diff files:
 
 ## Dependencies
 
-- Python: paramiko, python-dotenv
+### Backend (Python)
+- paramiko, python-dotenv
+- fastapi, uvicorn, pyyaml, pydantic
 - Ansible Collections: cisco.nxos, cisco.ios, ansible.netcommon
-- System: jq, bat (optional, for diff display)
+
+### Frontend (Node.js)
+- react, react-dom
+- vite, tailwindcss
+- lucide-react (icons)
+
+### System
+- Node.js >= 18 (install via nvm: `nvm install 20`)
+- Python >= 3.8
+- Docker Desktop (for containerized deployment)
+- jq, bat (optional, for diff display)
+
+## Test Environment
+
+### Cisco DevNet Sandbox (Always-On NX-OS)
+The `sandbox` host is configured to connect to Cisco's public DevNet sandbox:
+- **Host**: sbx-nxos-mgmt.cisco.com
+- **Credentials**: Stored in `playbooks/group_vars/all.yml`
+- **Device**: Cisco Nexus 9000v (NX-OS 10.3)
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/hosts` | GET | List all configured hosts |
+| `/api/groups` | GET | List device groups |
+| `/api/hosts` | POST | Add new host |
+| `/api/run/{hostname}` | POST | Trigger config collection |
+| `/api/jobs/{job_id}` | GET | Get job status |
+| `/api/configs/{hostname}/latest` | GET | Get latest config with parsed sections |
+| `/api/changes/{hostname}/latest` | GET | Get latest diff |
+| `/api/logs/{hostname}/latest` | GET | Get latest log |
+| `/api/dashboard/summary` | GET | Dashboard statistics |
+
+## Frontend Configuration
+
+The React frontend uses Vite with a proxy configuration (`vite.config.js`):
+- Frontend runs on `http://localhost:5173`
+- API calls to `/api/*` are proxied to `http://localhost:8000`
+- This allows the frontend and backend to run on different ports during development

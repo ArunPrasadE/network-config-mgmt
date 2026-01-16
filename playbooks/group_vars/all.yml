@@ -3,7 +3,7 @@
 
 # Default network device credentials
 ansible_user: arun.elango
-ansible_password: "Pe_0dsHq_7GdwI5"
+ansible_password: "-qY42Q_52sOu"
 
 # FortiGate SSH credentials
 fortigate_host: "192.168.1.99"
