@@ -47,6 +47,7 @@
           {{ nxos_output.stdout[5] }}
         dest: "{{ output_dir }}/{{ inventory_hostname }}_{{ timestamp }}.json"
       delegate_to: localhost
+      when: nxos_output.stdout is defined
 
 
 - name: Gather running configuration from IOS devices
@@ -98,6 +99,7 @@
           {{ ios_output.stdout[6] }}
         dest: "{{ output_dir }}/{{ inventory_hostname }}_{{ timestamp }}.json"
       delegate_to: localhost
+      when: ios_output.stdout is defined
 
 
 - name: Gather running configuration from Cumulus devices

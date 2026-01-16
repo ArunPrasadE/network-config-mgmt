@@ -10,6 +10,9 @@ Multi-vendor network configuration backup and change tracking system. Uses Ansib
 
 ```
 NetworkAutomation/
+├── .claude/skills/           # Claude Code skills
+│   ├── update-claude-md/     # Skill to update this file
+│   └── git-setup/            # Skill for git operations
 ├── playbooks/
 │   ├── gather_configs.yml    # Main playbook (all device types)
 │   ├── inventory.yml         # Host inventory
@@ -29,6 +32,11 @@ NetworkAutomation/
 ├── requirements.txt          # Python dependencies
 └── .env.example              # Credentials template
 ```
+
+## Git Branches
+
+- `main` - Current simplified structure
+- `archives-v1-v4` - Original versions v1-v5 preserved for reference
 
 ## Commands
 
@@ -54,11 +62,14 @@ python scripts/orchestrator.py --git
 # Build image
 docker build -t network-config-backup .
 
-# Run container
-docker run -it --name netbackup network-config-backup
+# Run container interactively
+docker run -it --name netbackup network-config-backup bash
 
-# Run with mounted output directory
-docker run -it -v $(pwd)/output:/app/output network-config-backup
+# Run orchestrator with mounted output
+docker run --rm -v $(pwd)/output:/app/output network-config-backup python3 scripts/orchestrator.py
+
+# Run for specific host
+docker run --rm -v $(pwd)/output:/app/output network-config-backup python3 scripts/orchestrator.py --host <hostname>
 ```
 
 ### Ansible Vault
@@ -81,7 +92,7 @@ ansible-playbook playbooks/gather_configs.yml --vault-password-file vault_passwo
 crontab -e
 
 # Run every 5 minutes
-*/5 * * * * cd /app && python scripts/orchestrator.py --vault-password-file vault_password.txt >> /var/log/netbackup.log 2>&1
+*/5 * * * * cd /app && python3 scripts/orchestrator.py --vault-password-file vault_password.txt >> /var/log/netbackup.log 2>&1
 ```
 
 ## Architecture
