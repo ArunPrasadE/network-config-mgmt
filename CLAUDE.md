@@ -11,6 +11,7 @@ Multi-vendor network configuration backup and change tracking system. Uses Ansib
 ```
 NetworkAutomation/
 ├── .claude/skills/           # Claude Code skills
+│   ├── close-project/        # End-of-session: update docs + commit to front-end
 │   ├── update-claude-md/     # Skill to update this file
 │   └── git-setup/            # Skill for git operations
 ├── backend/                  # FastAPI backend server
