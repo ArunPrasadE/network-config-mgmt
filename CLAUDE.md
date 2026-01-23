@@ -43,8 +43,10 @@ NetworkAutomation/
 │   ├── changes/              # Diff files when changes detected
 │   └── logs/                 # Playbook execution logs
 ├── docs/                     # Technical documentation
-├── start-dev.sh              # Start both frontend and backend
-├── start-backend.sh          # Start FastAPI backend only
+├── Start-App.bat             # Windows one-click launcher (double-click to start)
+├── start-app.sh              # Full app startup script (Docker + frontend + browser)
+├── start-dev.sh              # Start both frontend and backend (local Python)
+├── start-backend.sh          # Start FastAPI backend only (local Python)
 ├── start-frontend.sh         # Start React frontend only
 ├── Dockerfile                # Container definition
 ├── ansible.cfg               # Ansible configuration
@@ -55,9 +57,29 @@ NetworkAutomation/
 ## Git Branches
 
 - `main` - Current simplified structure
+- `front-end` - Web UI development branch
 - `archives-v1-v4` - Original versions v1-v5 preserved for reference
 
 ## Commands
+
+### Quick Start (One-Click Launch)
+
+The easiest way to start the full application on Windows with WSL:
+
+1. Make sure Docker Desktop is running
+2. Double-click `Start-App.bat` in Windows Explorer
+
+This will:
+- Start the Docker container (`netconfig-backend`)
+- Wait for the backend API to be ready
+- Start the React frontend
+- Open http://localhost:5173 in your default browser
+
+**From WSL terminal:**
+```bash
+cd /mnt/d/NetworkMgmt/network-config-mgmt
+./start-app.sh
+```
 
 ### Web Frontend (Development)
 
@@ -102,10 +124,13 @@ python scripts/orchestrator.py --git
 # Build image
 docker build -t network-config-mgmt .
 
-# Run backend API server in Docker (with volume mount for persistence)
+# Run backend API server in Docker (first time)
 docker run -d --name netconfig-backend -p 8000:8000 \
   -v $(pwd):/app -w /app \
   network-config-mgmt python3 -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+
+# Start existing container (after reboot or stop)
+docker start netconfig-backend
 
 # Run orchestrator directly in Docker (with host key checking disabled)
 docker exec -e ANSIBLE_HOST_KEY_CHECKING=False netconfig-backend \
@@ -116,6 +141,9 @@ docker run -it --name netbackup network-config-mgmt bash
 
 # Stop and remove container
 docker stop netconfig-backend && docker rm netconfig-backend
+
+# View container logs
+docker logs netconfig-backend
 ```
 
 **Note**: The `ANSIBLE_HOST_KEY_CHECKING=False` environment variable is required because the Docker container's `/app` directory is world-writable, causing Ansible to ignore `ansible.cfg`.

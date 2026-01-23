@@ -18,6 +18,10 @@ __pycache__/
 .venv/
 venv/
 
+# Node.js
+node_modules/
+dist/
+
 # macOS
 .DS_Store
 
