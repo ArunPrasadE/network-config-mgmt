@@ -1,0 +1,4 @@
+ansible_connection: ansible.netcommon.network_cli
+ansible_host: devnetsandboxiosxec9k.cisco.com
+ansible_network_os: cisco.ios.ios
+ansible_password: 32AirUj9_Mk-

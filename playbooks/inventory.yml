@@ -1,30 +1,17 @@
----
 all:
   children:
-    # Cisco NX-OS switches (datacenter)
     nxos:
-      hosts:
-        # example-nexus-01:
-
-    # Cisco IOS switches
+      hosts: null
     ios:
       hosts:
-        test-ngt-frsw-001:
-
-    # Cisco NX-OS virtual switches
+        test-ngt-frsw-001: null
+        cat-vswitch: null
     vswitch:
       hosts:
-        sandbox:
-
-    # Cumulus Linux switches
+        sandbox: null
     cumulus:
-      hosts:
-        # test-edge-01:
-        # test-edge-02:
-
-    # FortiGate firewalls (via SSH script)
+      hosts: null
     fortigate:
-      hosts:
-        # test-fire001:
+      hosts: null
       vars:
         ansible_connection: local

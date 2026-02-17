@@ -44,6 +44,7 @@ COPY ansible.cfg .
 COPY playbooks/ ./playbooks/
 COPY scripts/ ./scripts/
 COPY docs/ ./docs/
+COPY backend/ ./backend/
 
 # Create output directories
 RUN mkdir -p output/configs output/changes output/logs
@@ -60,4 +61,4 @@ RUN chmod +x scripts/*.py scripts/*.sh
 RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime && echo "UTC" > /etc/timezone
 
 # Default command
-CMD ["bash"]
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

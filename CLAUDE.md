@@ -4,146 +4,178 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Multi-vendor network configuration backup and change tracking system. Uses Ansible playbooks to gather running configurations from Cisco NX-OS, Cisco IOS, Cumulus Linux, and FortiGate firewalls. Automatically detects configuration changes and generates diff reports.
-
-## Directory Structure
-
-```
-NetworkAutomation/
-├── .claude/skills/           # Claude Code skills
-│   ├── update-claude-md/     # Skill to update this file
-│   └── git-setup/            # Skill for git operations
-├── playbooks/
-│   ├── gather_configs.yml    # Main playbook (all device types)
-│   ├── inventory.yml         # Host inventory
-│   ├── group_vars/           # Connection settings + credentials (vault-encrypted)
-│   └── host_vars/            # Per-host overrides
-├── scripts/
-│   ├── orchestrator.py       # Main execution script
-│   ├── fortigate_ssh.py      # FortiGate SSH config retrieval
-│   └── setup_vault.sh        # Vault encryption setup helper
-├── output/
-│   ├── configs/              # Collected device configs
-│   ├── changes/              # Diff files when changes detected
-│   └── logs/                 # Playbook execution logs
-├── docs/                     # Technical documentation
-├── Dockerfile                # Container definition
-├── ansible.cfg               # Ansible configuration
-├── requirements.txt          # Python dependencies
-└── .env.example              # Credentials template
-```
+Multi-vendor network configuration backup and change tracking system. Collects running configs from Cisco NX-OS, Cisco IOS, Cumulus Linux, and FortiGate devices via Ansible. Detects changes and generates diff reports. Includes a FastAPI backend and React frontend for interactive use.
 
 ## Git Branches
 
-- `main` - Current simplified structure
+- `main` - Current structure (backend + frontend + CLI)
+- `front-end` - Web UI development branch
 - `archives-v1-v4` - Original versions v1-v5 preserved for reference
 
 ## Commands
 
-### Run Configuration Backup
+### Quick Start (Windows/WSL)
+
+1. Ensure Docker Desktop is running
+2. Double-click `Start-App.bat` in Windows Explorer, **or** from WSL terminal:
 
 ```bash
-# Run for all hosts
-python scripts/orchestrator.py
+./start-app.sh   # Builds Docker image, starts backend, launches frontend, opens browser
+```
 
-# Run with Ansible Vault
-python scripts/orchestrator.py --vault-password-file vault_password.txt
+### Development (Local Python, no Docker)
 
-# Run for single host
-python scripts/orchestrator.py --host sandbox
+```bash
+./start-dev.sh        # Start both backend (port 8000) and frontend (port 5173)
+./start-backend.sh    # FastAPI only — creates venv, installs deps, runs uvicorn
+./start-frontend.sh   # React only — npm install + vite dev
+```
 
-# Run with git auto-commit
-python scripts/orchestrator.py --git
+API docs (Swagger): http://localhost:8000/docs
+
+### CLI Configuration Backup
+
+```bash
+python scripts/orchestrator.py                                    # All hosts
+python scripts/orchestrator.py --host sandbox                     # Single host
+python scripts/orchestrator.py --vault-password-file vault.txt    # With Vault
+python scripts/orchestrator.py --git                              # Auto-commit to Git
 ```
 
 ### Docker
 
 ```bash
-# Build image
-docker build -t network-config-backup .
+docker build -t network-config-mgmt .
 
-# Run container interactively
-docker run -it --name netbackup network-config-backup bash
+# First-time run (mounts project dir)
+docker run -d --name netconfig-backend -p 8000:8000 \
+  -v $(pwd):/app -w /app \
+  network-config-mgmt python3 -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
-# Run orchestrator with mounted output
-docker run --rm -v $(pwd)/output:/app/output network-config-backup python3 scripts/orchestrator.py
+docker start netconfig-backend   # Start existing container
 
-# Run for specific host
-docker run --rm -v $(pwd)/output:/app/output network-config-backup python3 scripts/orchestrator.py --host <hostname>
+# Run orchestrator inside container — env var required (world-writable /app causes ansible.cfg to be ignored)
+docker exec -e ANSIBLE_HOST_KEY_CHECKING=False netconfig-backend \
+  python3 scripts/orchestrator.py --host sandbox
+
+docker logs netconfig-backend
+docker stop netconfig-backend && docker rm netconfig-backend
 ```
 
 ### Ansible Vault
 
 ```bash
-# Initial setup (encrypt credentials)
-./scripts/setup_vault.sh
-
-# Edit encrypted credentials
+./scripts/setup_vault.sh                                              # Initial encryption setup
 ansible-vault edit playbooks/group_vars/all.yml --vault-password-file vault_password.txt
-
-# Run playbook manually
 ansible-playbook playbooks/gather_configs.yml --vault-password-file vault_password.txt
 ```
 
-### Cron Setup (inside container)
+### Cron (inside container)
 
-```bash
-# Edit crontab
-crontab -e
-
-# Run every 5 minutes
+```
 */5 * * * * cd /app && python3 scripts/orchestrator.py --vault-password-file vault_password.txt >> /var/log/netbackup.log 2>&1
 ```
 
 ## Architecture
 
-### Orchestrator Flow
+### Three-Tier Stack
 
-1. Extract hosts from `inventory.yml` using `ansible-inventory`
-2. Run `gather_configs.yml` playbook per host
-3. Compare new config with previous baseline
-4. If changed: create diff file, remove old config, keep new as baseline
-5. If identical: remove new config (no changes)
-6. Optional: commit and push to git
+```
+React frontend (5173) → Vite proxy /api/* → FastAPI backend (8000) → Ansible + scripts → Devices
+```
 
-### Supported Devices
+Vite proxies all `/api/*` requests to `http://localhost:8000` (configured in `frontend/vite.config.js`).
 
-| Group | Device Type | Connection |
-|-------|-------------|------------|
-| nxos | Cisco NX-OS switches | network_cli |
-| vswitch | Cisco NX-OS virtual switches | network_cli |
-| ios | Cisco IOS switches | network_cli |
-| cumulus | Cumulus Linux switches | ssh |
-| fortigate | FortiGate firewalls | SSH via Python script |
+### Async Job Execution
 
-### Credentials Management
+Config collection is long-running. The backend uses a non-blocking pattern:
+1. `POST /api/run/{hostname}` → spawns `orchestrator.py --host {hostname}` as asyncio subprocess, returns `job_id` immediately
+2. Frontend polls `GET /api/jobs/{job_id}` every 2 seconds
+3. Job status is tracked in `running_jobs` dict (in-memory; lost on restart)
+4. On completion, frontend fetches `/api/configs/{hostname}/latest` and `/api/changes/{hostname}/latest`
 
-Credentials are stored in `playbooks/group_vars/all.yml` and should be encrypted with Ansible Vault:
+### Config Change Detection (`scripts/orchestrator.py`)
 
+1. Collect new config via Ansible → write to `output/configs/{hostname}_{timestamp}.json`
+2. Compare with previous baseline file (second-to-last by timestamp)
+3. Strip time-sensitive lines (NTP counters, etc.) before diffing
+4. **Changed**: create unified diff in `output/changes/`, delete old baseline, keep new as baseline
+5. **Identical**: delete new file; baseline unchanged
+
+### Multi-Vendor Playbook (`playbooks/gather_configs.yml`)
+
+Single playbook with four plays, each targeting a device group:
+- `nxos` / `vswitch` → `cisco.nxos.nxos_command`
+- `ios` → `cisco.ios.ios_command`
+- `cumulus` → `ansible.builtin.command` (SSH)
+- `fortigate` → `ansible.builtin.script` runs `scripts/fortigate_ssh.py` on localhost via Paramiko
+
+FortiGate credentials are passed as env vars: `FORTIGATE_HOST`, `FORTIGATE_USER`, `FORTIGATE_PASSWORD` (sourced from `group_vars/all.yml`).
+
+### Supported Device Groups
+
+| Group | Device | Connection |
+|-------|--------|------------|
+| nxos | Cisco NX-OS | network_cli |
+| vswitch | Cisco NX-OS virtual | network_cli |
+| ios | Cisco IOS | network_cli |
+| cumulus | Cumulus Linux | ssh |
+| fortigate | FortiGate | Paramiko script (localhost) |
+
+### Credentials
+
+Stored in `playbooks/group_vars/all.yml` — encrypt with Ansible Vault before committing:
 ```yaml
 ansible_user: admin
-ansible_password: "your-password"
+ansible_password: "..."
 fortigate_host: "192.168.1.99"
 fortigate_user: "admin"
-fortigate_password: "your-password"
+fortigate_password: "..."
 ```
 
-FortiGate script reads from environment variables: `FORTIGATE_HOST`, `FORTIGATE_USER`, `FORTIGATE_PASSWORD`
+### File Naming
 
-## File Naming Convention
+```
+output/configs/   {hostname}_{YYYY-MM-DD_HH-MM-SS}.json
+output/changes/   {hostname}_change_{YYYY-MM-DD_HH-MM-SS}.diff
+output/logs/      {hostname}_{YYYY-MM-DD_HH-MM-SS}.log
+```
 
-All config files use standardized naming:
-```
-{hostname}_{YYYY-MM-DD_HH-MM-SS}.json
-```
+One baseline config file per host is kept; diff files only appear when changes are detected.
 
-Diff files:
-```
-{hostname}_change_{YYYY-MM-DD_HH-MM-SS}.diff
-```
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/hosts` | List all configured hosts |
+| POST | `/api/hosts` | Add host (updates `inventory.yml` + creates `host_vars/`) |
+| GET | `/api/groups` | List device groups |
+| POST | `/api/run/{hostname}` | Trigger config collection (returns `job_id`) |
+| GET | `/api/jobs/{job_id}` | Poll job status |
+| GET | `/api/configs/{hostname}/latest` | Latest config with parsed sections |
+| GET | `/api/changes/{hostname}/latest` | Latest diff (additions/removals) |
+| GET | `/api/logs/{hostname}/latest` | Latest log with error extraction |
+| GET | `/api/dashboard/summary` | Dashboard statistics |
+
+## Test Environment
+
+**Cisco DevNet Always-On NX-OS Sandbox** (configured as `sandbox` host):
+- Host: `sbx-nxos-mgmt.cisco.com`
+- Device: Cisco Nexus 9000v (NX-OS 10.3)
+- Credentials: `playbooks/group_vars/all.yml`
 
 ## Dependencies
 
-- Python: paramiko, python-dotenv
-- Ansible Collections: cisco.nxos, cisco.ios, ansible.netcommon
-- System: jq, bat (optional, for diff display)
+**Python** (`requirements.txt`): `ansible`, `paramiko`, `fastapi`, `uvicorn`, `pyyaml`, `pydantic`, `python-dotenv`
+
+**Ansible Collections**: `cisco.nxos`, `cisco.ios`, `ansible.netcommon`, `fortinet.fortios`
+
+**Node.js** (`frontend/package.json`): React 18, Vite 5, Tailwind CSS 3, lucide-react
+
+**System**: Python >= 3.8, Node.js >= 18 (`nvm install 20`), Docker Desktop
+
+## Claude Code Skills
+
+- `.claude/skills/git-setup/` — Git SSH setup + commit/push
+- `.claude/skills/update-claude-md/` — Update this file after changes
+- `.claude/skills/close-project/` — End-of-session: update docs + commit to front-end branch
