@@ -40,7 +40,7 @@ echo "      Starting container..."
 docker run -d \
     --name "$CONTAINER_NAME" \
     -p 8000:8000 \
-    -v $(pwd):/app \
+    -v "$(pwd):/app" \
     "$IMAGE_NAME"
 
 if [ $? -eq 0 ]; then
@@ -85,19 +85,19 @@ echo ""
 echo "[4/4] Opening browser..."
 sleep 3
 
-# Open browser (macOS priority)
-if command -v open &> /dev/null; then
-    open http://localhost:5173
+# Open browser (WSL2/Windows priority)
+if command -v cmd.exe &> /dev/null; then
+    cmd.exe /c start http://localhost:5173 2>/dev/null
 elif command -v wslview &> /dev/null; then
     wslview http://localhost:5173
+elif command -v open &> /dev/null; then
+    open http://localhost:5173
 elif command -v xdg-open &> /dev/null; then
     xdg-open http://localhost:5173
-elif command -v cmd.exe &> /dev/null; then
-    cmd.exe /c start http://localhost:5173
 else
     echo "      Could not open browser automatically"
-    echo "      Please open http://localhost:5173 manually"
 fi
+echo "      Open manually: http://localhost:5173"
 
 echo ""
 echo "=========================================="
