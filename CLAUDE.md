@@ -14,14 +14,27 @@ Multi-vendor network configuration backup and change tracking system. Collects r
 
 ## Commands
 
-### Quick Start (Windows/WSL)
+### Start the App (Docker Compose)
 
-1. Ensure Docker Desktop is running
-2. Double-click `Start-App.bat` in Windows Explorer, **or** from WSL terminal:
+Both frontend and backend run inside Docker. Works identically on macOS and WSL2.
 
 ```bash
-./start-app.sh   # Builds Docker image, starts backend, launches frontend, opens browser
+./start-app.sh          # build images + start all services (Ctrl+C to stop)
 ```
+
+Or on Windows, double-click `Start-App.bat` (auto-detects WSL path, no hardcoding needed).
+
+```bash
+docker compose up --build    # same thing, explicit
+docker compose down          # stop and remove containers
+docker compose logs -f       # stream logs from all services
+docker compose logs backend  # logs for one service
+```
+
+URLs once running:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- Swagger docs: http://localhost:8000/docs
 
 ### Development (Local Python, no Docker)
 
@@ -30,8 +43,6 @@ Multi-vendor network configuration backup and change tracking system. Collects r
 ./start-backend.sh    # FastAPI only — creates venv, installs deps, runs uvicorn
 ./start-frontend.sh   # React only — npm install + vite dev
 ```
-
-API docs (Swagger): http://localhost:8000/docs
 
 ### CLI Configuration Backup
 
@@ -42,24 +53,12 @@ python scripts/orchestrator.py --vault-password-file vault.txt    # With Vault
 python scripts/orchestrator.py --git                              # Auto-commit to Git
 ```
 
-### Docker
+### Docker (manual, without Compose)
 
 ```bash
-docker build -t network-config-mgmt .
-
-# First-time run (mounts project dir)
-docker run -d --name netconfig-backend -p 8000:8000 \
-  -v $(pwd):/app -w /app \
-  network-config-mgmt python3 -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
-
-docker start netconfig-backend   # Start existing container
-
-# Run orchestrator inside container — env var required (world-writable /app causes ansible.cfg to be ignored)
+# Run orchestrator inside running backend container
 docker exec -e ANSIBLE_HOST_KEY_CHECKING=False netconfig-backend \
   python3 scripts/orchestrator.py --host sandbox
-
-docker logs netconfig-backend
-docker stop netconfig-backend && docker rm netconfig-backend
 ```
 
 ### Ansible Vault
@@ -70,7 +69,7 @@ ansible-vault edit playbooks/group_vars/all.yml --vault-password-file vault_pass
 ansible-playbook playbooks/gather_configs.yml --vault-password-file vault_password.txt
 ```
 
-### Cron (inside container)
+### Cron (inside backend container)
 
 ```
 */5 * * * * cd /app && python3 scripts/orchestrator.py --vault-password-file vault_password.txt >> /var/log/netbackup.log 2>&1
@@ -84,7 +83,9 @@ ansible-playbook playbooks/gather_configs.yml --vault-password-file vault_passwo
 React frontend (5173) → Vite proxy /api/* → FastAPI backend (8000) → Ansible + scripts → Devices
 ```
 
-Vite proxies all `/api/*` requests to `http://localhost:8000` (configured in `frontend/vite.config.js`).
+Vite proxies all `/api/*` requests to the backend. The target is set via `VITE_BACKEND_URL` env var:
+- In Docker Compose: `http://backend:8000` (Docker internal network, service name)
+- Running locally: falls back to `http://localhost:8000`
 
 ### Async Job Execution
 

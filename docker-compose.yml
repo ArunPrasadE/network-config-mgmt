@@ -1,0 +1,36 @@
+services:
+
+  # ── Backend: FastAPI + Ansible (Python/Ubuntu) ────────────────────────────
+  backend:
+    build: .
+    container_name: netconfig-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ".:/app"                        # live source mount — edit files, changes reflect immediately
+    environment:
+      - ANSIBLE_HOST_KEY_CHECKING=False # required: /app volume is world-writable, ansible.cfg is ignored
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+  # ── Frontend: React + Vite (Node.js/Alpine) ───────────────────────────────
+  frontend:
+    image: node:20-alpine
+    container_name: netconfig-frontend
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - "./frontend:/app"               # live source mount — edit files, hot-reload works
+      - frontend_node_modules:/app/node_modules  # named volume: always Linux binaries regardless of host OS
+    environment:
+      - VITE_BACKEND_URL=http://backend:8000  # reaches backend via Docker internal network
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+# Named volume for node_modules — Docker manages this internally.
+# Avoids the host OS (macOS/Windows) incompatibility with Linux binaries.
+volumes:
+  frontend_node_modules:
