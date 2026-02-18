@@ -1,5 +1,6 @@
-# Network Configuration Backup System
-# Docker container with Ansible and Python for multi-vendor network automation
+# Network Configuration Backup System — All-in-One Image
+# Single container: Python + Ansible + Node.js + FastAPI + React
+# Base: ubuntu:22.04 — no Docker Hub pulls needed at runtime
 # -------------------------------------------------------------------------------
 
 FROM ubuntu:22.04
@@ -8,7 +9,7 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies
+# Install system dependencies + Node.js 20 (via NodeSource)
 RUN apt-get update && apt-get install -y \
     software-properties-common \
     python3 \
@@ -26,6 +27,10 @@ RUN apt-get update && apt-get install -y \
     jq \
     tzdata \
     git \
+    curl \
+    ca-certificates \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -39,26 +44,22 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Install Ansible collections
 RUN ansible-galaxy collection install cisco.nxos cisco.ios fortinet.fortios ansible.netcommon
 
+# Install Node.js dependencies (baked into image so npm install isn't needed at runtime)
+COPY frontend/package.json frontend/package-lock.json* frontend/
+RUN cd frontend && npm install
+
 # Copy project files
-COPY ansible.cfg .
-COPY playbooks/ ./playbooks/
-COPY scripts/ ./scripts/
-COPY docs/ ./docs/
-COPY backend/ ./backend/
+COPY . .
 
 # Create output directories
 RUN mkdir -p output/configs output/changes output/logs
 
 # Make scripts executable
-RUN chmod +x scripts/*.py scripts/*.sh
+RUN chmod +x scripts/*.py scripts/*.sh docker-entrypoint.sh
 
-# Set timezone (uncomment your timezone)
-# JST (Japan)
-# RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && echo "Asia/Tokyo" > /etc/timezone
-# IST (India)
-# RUN ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && echo "Asia/Kolkata" > /etc/timezone
-# UTC (default)
+# Set timezone
 RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime && echo "UTC" > /etc/timezone
 
-# Default command
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 5173 8000
+
+CMD ["/app/docker-entrypoint.sh"]

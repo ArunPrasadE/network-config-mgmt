@@ -16,25 +16,34 @@ Multi-vendor network configuration backup and change tracking system. Collects r
 
 ### Start the App (Docker Compose)
 
-Both frontend and backend run inside Docker. Works identically on macOS and WSL2.
+Everything runs inside a **single Docker container** (Python + Node.js + Ansible + FastAPI + React).
+The image is hosted on **ghcr.io** (GitHub Container Registry) — Docker Hub is not needed at runtime.
 
 ```bash
-./start-app.sh          # build images + start all services (Ctrl+C to stop)
+./start-app.sh          # pulls from ghcr.io if image missing, then starts (Ctrl+C to stop)
 ```
 
 Or on Windows, double-click `Start-App.bat` (auto-detects WSL path, no hardcoding needed).
 
 ```bash
-docker compose up --build    # same thing, explicit
-docker compose down          # stop and remove containers
-docker compose logs -f       # stream logs from all services
-docker compose logs backend  # logs for one service
+docker compose up            # start the container
+docker compose down          # stop and remove container
+docker compose logs -f       # stream logs
 ```
 
 URLs once running:
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:8000
 - Swagger docs: http://localhost:8000/docs
+
+### Build and Push Image (WSL2 only — when dependencies change)
+
+```bash
+./push-images.sh             # build image + push to ghcr.io
+docker compose build         # build only (requires Docker Hub for ubuntu:22.04 base)
+docker compose push          # push to ghcr.io
+docker compose pull          # pull latest from ghcr.io (on Mac)
+```
 
 ### Development (Local Python, no Docker)
 
@@ -56,8 +65,8 @@ python scripts/orchestrator.py --git                              # Auto-commit 
 ### Docker (manual, without Compose)
 
 ```bash
-# Run orchestrator inside running backend container
-docker exec -e ANSIBLE_HOST_KEY_CHECKING=False netconfig-backend \
+# Run orchestrator inside the running container
+docker exec -e ANSIBLE_HOST_KEY_CHECKING=False netconfig-app \
   python3 scripts/orchestrator.py --host sandbox
 ```
 
@@ -69,7 +78,7 @@ ansible-vault edit playbooks/group_vars/all.yml --vault-password-file vault_pass
 ansible-playbook playbooks/gather_configs.yml --vault-password-file vault_password.txt
 ```
 
-### Cron (inside backend container)
+### Cron (inside container)
 
 ```
 */5 * * * * cd /app && python3 scripts/orchestrator.py --vault-password-file vault_password.txt >> /var/log/netbackup.log 2>&1
@@ -77,15 +86,17 @@ ansible-playbook playbooks/gather_configs.yml --vault-password-file vault_passwo
 
 ## Architecture
 
-### Three-Tier Stack
+### Single-Container Stack
 
 ```
-React frontend (5173) → Vite proxy /api/* → FastAPI backend (8000) → Ansible + scripts → Devices
+Single container (ghcr.io/arunprasade/netconfig:latest):
+  Ubuntu 22.04
+  ├── Vite dev server (:5173) — proxies /api/* → localhost:8000
+  ├── FastAPI + uvicorn (:8000)
+  └── Ansible → SSH → network devices
 ```
 
-Vite proxies all `/api/*` requests to the backend. The target is set via `VITE_BACKEND_URL` env var:
-- In Docker Compose: `http://backend:8000` (Docker internal network, service name)
-- Running locally: falls back to `http://localhost:8000`
+Both services run inside the same container. `docker-entrypoint.sh` starts uvicorn in the background and Vite in the foreground. Vite proxies `/api/*` to `http://localhost:8000` (same container, no Docker networking needed).
 
 ### Async Job Execution
 
